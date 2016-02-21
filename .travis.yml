@@ -1,0 +1,32 @@
+language: cpp
+
+before_install:
+- if [ "$CXX" == "g++" ]; then  sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; fi
+- if [ "$CXX" == "g++" ]; then sudo apt-get update -qq; fi
+# gcc 4.9
+- if [ "$CXX" == "g++" ]; then sudo apt-get install -y g++-4.9; fi
+- if [ "$CXX" == "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
+
+compiler:
+  - gcc-4.9
+
+sudo: required
+dist: trusty
+
+install: ./install_dependencies.sh
+
+before_script:
+  - mkdir build 
+  - cd build
+  - export PROJECT_HOME=$(pwd)
+  - cd ${PROJECT_HOME}
+  - cmake -Dtest=on -DDeepFeatures=OFF ..
+
+script: make && ./bin/RunUnitTests
+
+branches:
+  only:
+    - master
+    
+notifications:
+  email: true

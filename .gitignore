@@ -1,0 +1,58 @@
+.DS_Store
+*.vim
+*.swp
+build/*
+bin/*
+xcode/*
+*.p
+
+
+# ignore numpy arrays
+*.npy
+*.csv
+
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.pyc
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+#Tags etc.
+TAGS
+GPATH
+GRTAGS
+GTAGS
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+# images, documents
+*.pdf
+*.jpg
+
+
+# ignore matlab files
+*.m~
+*.mat
+*.dat
+
+
+# ignore IDE's files
+.idea/
+.release_time
