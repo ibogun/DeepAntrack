@@ -83,7 +83,7 @@
 // POSIX
 #endif
 
-DEFINE_int32(budget, 100, "Budget");
+DEFINE_int32(budget, 10, "Budget");
 DEFINE_int32(display, 1, "Display settings.");
 DEFINE_double(lambda_s, 0.3, "Straddling lambda in ObjDetectorTracker().");
 DEFINE_double(lambda_e, 0.3, "Edge density lambda in ObjDetectorTracker().");
@@ -93,7 +93,7 @@ DEFINE_int32(video_index, -1, "Video to use for tracking.");
 DEFINE_string(video_name, "", "Video name to use.");
 DEFINE_int32(frame_from, 0, "Frame from");
 DEFINE_int32(frame_to, 5000, "Frame to");
-DEFINE_int32(tracker_type, 1,
+DEFINE_int32(tracker_type, 0,
              "Type of the tracker (RobStruck - 0, ObjDet - 1, FilterBad - 2)");
 DEFINE_double(topK, 50, "Top K objectness boxes in FilterBadStruck tracker.");
 DEFINE_string(proto_file,
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::pair<std::string, std::vector<std::string>>> videos =
       dataset->prepareDataset(wu2015RootFolder);
 
-  std::string feature = "deep";
+  std::string feature = "raw";
   std::string kernel = "int";
 
   bool pretraining = false;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
 
     vector<cv::Rect> groundTruth = dataset->readGroundTruth(gt_images.first);
     Struck *tracker =
-        new ObjDetectorStruck(pretraining, useFilter, useEdgeDensity,
+        new Struck(pretraining, useFilter, useEdgeDensity,
                               useStraddling, scalePrior, kernel, feature, note);
     tracker->setParams(map);
     tracker->setFeatureParams(featureParamsMap);
@@ -232,7 +232,6 @@ int main(int argc, char *argv[]) {
   }
   // std::string tracker_save_file = dirName + "/" + dataset->videos[vidIndex];
   // tracker->saveResults(tracker_save_file);
-
   delete dataset;
   //delete tracker;
   return 0;

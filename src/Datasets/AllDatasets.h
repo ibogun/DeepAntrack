@@ -10,11 +10,5 @@
 #include "DatasetALOV300.h"
 #include "DatasetVOT2014.h"
 #include "DatasetVOT2015.h"
-#include "EvaluationRun.h"
-#include "ExperimentTemporalRobustness.h"
-#include "ExperimentSpatialRobustness.h"
-#include "ExperimentRunner.h"
-#include "AllExperimentsRunner.h"
-
 
 #endif //ROBUST_TRACKING_BY_DETECTION_ALLDATASETS_H

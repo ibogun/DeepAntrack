@@ -20,14 +20,13 @@ public:
     RawFeatures(int size_){this->size=size_;};
     
     cv::Mat prepareImage(cv::Mat* imageIn);
-    arma::mat calculateFeature(cv::Mat& processedImage, std::vector<cv::Rect>& rects);
+    cv::Mat calculateFeature( cv::Mat& processedImage, std::vector<cv::Rect>& rects);
     int calculateFeatureDimension(){return size*size;};
     
     std::string getInfo(){
         std::string r="Raw features with size: "+std::to_string(size)+" \n";
         return r;
     };
-
 
     ~RawFeatures(){
     }

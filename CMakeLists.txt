@@ -19,9 +19,8 @@ IF (DeepFeatures)
   find_package(Caffe REQUIRED)
 ENDIF()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x  -fsanitize=address -g")
 find_package(OpenCV REQUIRED )
-find_package(Armadillo REQUIRED)
 find_package (Threads REQUIRED)
 find_package( Boost COMPONENTS program_options python filesystem system)
 find_package(gflags REQUIRED)
@@ -94,13 +93,36 @@ FILE(GLOB SOURCE_FILES
 	src/Tracker/*.h
 )
 
+
+
+find_package( Boost COMPONENTS filesystem system REQUIRED )
+add_executable(robust_struck_tracker_v1.0 ${Superpixels} ${SOURCE_FILES} ${PROJECT_MAIN})
+
+include_directories(${OpenCV_INCLUDE_DIRS} )
+include_directories (${Boost_INCLUDE_DIRS})
+
+if (DeepFeatures)
+  target_link_libraries(robust_struck_tracker_v1.0 ${OpenCV_LIBS}
+     ${CMAKE_THREAD_LIBS_INIT}
+    ${Boost_LIBRARIES}  caffe)
+else()
+  target_link_libraries(robust_struck_tracker_v1.0 ${OpenCV_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${Boost_LIBRARIES} ${GLOG_LIBRARY} gflags)
+endif()
+
+
 ################################
 # Testing
 ################################
 if (test)
+  find_package(Armadillo REQUIRED)
+  FILE(GLOB ARMA_FILES
+    src/arma/*.cpp
+    src/arma/*.h
+    )
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(lib/gtest-1.6.0)
-
   enable_testing()
 
   # Include the gtest library. gtest_SOURCE_DIR is available due to
@@ -111,17 +133,17 @@ if (test)
   ##############
   # Unit Tests
   ##############
-  add_executable(RunUnitTests  ${Superpixels} ${SOURCE_FILES} ${TEST_FILES})
+  add_executable(RunUnitTests  ${ARMA_FILES} ${Superpixels} ${SOURCE_FILES} ${TEST_FILES})
   #add_executable(RunUnitTests ${SOURCE_FILES})
   # Standard linking to gtest stuff.
 
   if (DeepFeatures)
   target_link_libraries(RunUnitTests gtest gtest_main ${OpenCV_LIBS}
-    ${ARMADILLO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}
+     ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}  ${ARMADILLO_LIBRARIES}
      caffe)
   else()
     target_link_libraries(RunUnitTests gtest gtest_main ${OpenCV_LIBS}
-    ${ARMADILLO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}
+     ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}  ${ARMADILLO_LIBRARIES}
     ${GLOG_LIBRARY} gflags)
   endif()
 endif()
@@ -134,10 +156,10 @@ if(VOT2015)
     add_executable(struck_vot2014 ${Superpixels} ${SOURCE_FILES} ${TRAX_FILES})
 
     if (DeepFeatures)
-    target_link_libraries(struck_vot2014 ${OpenCV_LIBS} ${ARMADILLO_LIBRARIES}
+    target_link_libraries(struck_vot2014 ${OpenCV_LIBS}
       ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}  caffe)
     else()
-       target_link_libraries(struck_vot2014 ${OpenCV_LIBS} ${ARMADILLO_LIBRARIES}
+       target_link_libraries(struck_vot2014 ${OpenCV_LIBS}
          ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES}  ${GLOG_LIBRARY} gflags)
     endif()
 	set_target_properties(struck_vot2014 PROPERTIES
@@ -164,7 +186,6 @@ if(python)
         ${PYTHON_LIBRARIES}
         ${Boost_LIBRARIES}
         ${OpenCV_LIBS}
-        ${ARMADILLO_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         caffe
         )
@@ -173,7 +194,7 @@ if(python)
         ${PYTHON_LIBRARIES}
         ${Boost_LIBRARIES}
         ${OpenCV_LIBS}
-        ${ARMADILLO_LIBRARIES}
+
         ${CMAKE_THREAD_LIBS_INIT}
         ${GLOG_LIBRARY}
         gflags
@@ -182,21 +203,3 @@ if(python)
     set_target_properties(antrack PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY ${PYTHON_DESTINATION})
 endif()
-
-find_package( Boost COMPONENTS filesystem system REQUIRED )
-add_executable(robust_struck_tracker_v1.0 ${Superpixels} ${SOURCE_FILES} ${PROJECT_MAIN})
-
-include_directories(${OpenCV_INCLUDE_DIRS} )
-include_directories(${ARMADILLO_INCLUDE_DIRS})
-include_directories (${Boost_INCLUDE_DIRS})
-
-if (DeepFeatures)
-  target_link_libraries(robust_struck_tracker_v1.0 ${OpenCV_LIBS}
-    ${ARMADILLO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_LIBRARIES}  caffe)
-else()
-  target_link_libraries(robust_struck_tracker_v1.0 ${OpenCV_LIBS}
-    ${ARMADILLO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_LIBRARIES} ${GLOG_LIBRARY} gflags)
-endif()
-

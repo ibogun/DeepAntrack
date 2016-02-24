@@ -21,9 +21,11 @@ class DrawRandomImage {
     /// Global Variables
     const int NUMBER = 100;
     const int DELAY = 0;
+
+    int seed;
     
-    const int window_width = 300;
-    const int window_height = 200;
+    const int window_width = 3;
+    const int window_height = 2;
     int x_1 = -window_width/2;
     int x_2 = window_width*3/2;
     int y_1 = -window_width/2;
@@ -31,6 +33,10 @@ class DrawRandomImage {
     
 public:
     /// Function headers
+    DrawRandomImage() {this->seed = 1;
+        srand(this->seed);};
+    DrawRandomImage(int seed_) {this->seed = seed_;
+        srand(this->seed);};
     static cv::Scalar randomColor(cv::RNG& rng );
     int Drawing_Random_Lines( cv::Mat image, char* window_name, cv::RNG rng );
     int Drawing_Random_Rectangles( cv::Mat image, char* window_name, cv::RNG rng );
@@ -43,6 +49,7 @@ public:
     
     
     cv::Mat getRandomImage();
+    cv::Mat getRandomFloatMatrix();
 };
 
 #endif /* defined(__Robust_tracking_by_detection__DrawRandomImage__) */

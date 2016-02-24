@@ -48,7 +48,7 @@ public:
                 this->caffe_net = caffe_net;
         }
         cv::Mat prepareImage(cv::Mat* imageIn);
-        arma::mat calculateFeature(cv::Mat& processedImage, std::vector<cv::Rect>& rects);
+        cv::Mat calculateFeature(cv::Mat& processedImage, std::vector<cv::Rect>& rects);
         std::string getInfo();
 
         int calculateFeatureDimension() {

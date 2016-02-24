@@ -18,30 +18,14 @@
 
 #include "../Features/Feature.h"
 
+#include "../Kernels/AllKernels.h"
 
-#include "../Kernels/RBFKernel.h"
-#include "../Kernels/IntersectionKernel.h"
-#include "../Kernels/IntersectionKernel_fast.h"
-#include "../Kernels/ApproximateKernel.h"
-#include "../Kernels/LinearKernel.h"
-#include "../Kernels/MultiKernel.h"
-
-#include "../Features/RawFeatures.h"
-#include "../Features/Haar.h"
-#include "../Features/Histogram.h"
-#include "../Features/HoG.h"
-#include "../Features/HoG_PCA.h"
-#include "../Features/DeepFeatures.h"
-#include "../Features/HoGandRawFeatures.h"
-#include "../Features/MultiFeature.h"
-
+#include "../Features/AllFeatures.h"
 
 #include "../Datasets/Dataset.h"
 #include "../Datasets/EvaluationRun.h"
 
 #include "../Superpixels/Objectness.h"
-
-#include "../Filter/KalmanFilterGenerator.h"
 #include "../Superpixels/Plot.h"
 
 
@@ -52,8 +36,6 @@ class Struck {
     LocationSampler* samplerForUpdate;
     LocationSampler* samplerForSearch;
     Plot* objPlot;
-
-    KalmanFilter_my filter;
 
     EdgeDensity edgeDensity;
     Straddling straddle;
@@ -113,9 +95,6 @@ class Struck {
         this->gtBox = box;
     }
 
-    void setRobustConstantInFilter(double b) {
-        this->filter.setBothB(b);
-    }
 
     cv::Mat getObjectnessCanvas() {
         return objectnessCanvas;
@@ -199,8 +178,6 @@ class Struck {
 
     virtual cv::Rect track(cv::Mat& image);
 
-    virtual arma::mat calculateDiscriminativeFunction(cv::Mat& image);
-
     virtual cv::Rect track(std::string image_name) {
         cv::Mat image = cv::imread(image_name);
         return this->track(image);
@@ -232,19 +209,6 @@ class Struck {
 
     void saveResults(string fileName);
 
-    void setFilter(const KalmanFilter_my& var){filter=var;};
-
-
-    arma::rowvec weightWithEdgeDensity(cv::Mat& image,
-                                       std::vector<cv::Rect>& rects,
-                                       std::vector<double> params,
-                                       int min_x,int min_y);
-
-    arma::rowvec weightWithStraddling(cv::Mat& image,
-                                      std::vector<cv::Rect>& rects,
-                                      std::vector<double> params,
-                                      int min_x,int min_y);
-
     void copyFromRectangleToImage(cv::Mat& canvas,
                                   cv::Mat& image,cv::Rect rect,
                                   int step,cv::Vec3b color);
@@ -261,7 +225,6 @@ class Struck {
     };
 
     ~Struck(){
-
         this->reset();
         delete olarank;
         delete feature;

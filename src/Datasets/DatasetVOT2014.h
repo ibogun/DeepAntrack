@@ -13,9 +13,6 @@
 #include "Dataset.h"
 #include <unordered_map>
 
-#include "armadillo"
-
-
 class DatasetVOT2014:public Dataset {
 
 

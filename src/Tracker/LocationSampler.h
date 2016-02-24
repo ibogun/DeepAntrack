@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include "../Features/Haar.h"
 
 class LocationSampler {
     int radius;
@@ -68,26 +67,6 @@ LocationSampler(int r,int nRad, int nAng)
         objectWidth=objW;
         objectHeight=objH;
     }
-
-    static std::vector<arma::mat> generateBoxesTensor(
-        const int R,
-        const int scale_R,
-        const int min_size_half,
-        const int min_scales,
-        const int max_scales,
-        const double downsample,
-        const double shrink_one_side_scale,
-        const int rows,
-        const int cols,
-        const cv::Rect& rect,
-        std::vector<int>* radiuses,
-        std::vector<int>* widths,
-        std::vector<int>* heights);
-
-    std::vector<arma::mat> generateBoxesTensor(const cv::Rect& rect,
-                                               std::vector<int>* radiuses,
-                                               std::vector<int>* widths,
-                                               std::vector<int>* heights);
 };
 
 #endif /* defined(__Robust_Struck__LocationSampler__) */

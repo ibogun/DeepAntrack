@@ -11,7 +11,6 @@
 #include <vector>
 
 #include <tuple>
-#include "armadillo"
 
 #include "../Kernels/Kernel.h"
 #include <unordered_map>
@@ -24,8 +23,6 @@ struct params {
 
 };
 
-
-using namespace arma;
 using namespace std;
 
 
@@ -62,80 +59,59 @@ class OLaRank_old {
 private:
 
     params parameters;
-
-    // number of classes
-
-
     Kernel* svm_kernel;
-
-
-
-    // if true,
     int verbose;
-
     // frameNumber - list of <frameNumber,value> pairs
-    unordered_map<Key,arma::mat,KeyHash, KeyEqual> kern;
-
-
+    unordered_map<Key,cv::Mat,KeyHash, KeyEqual> kern;
     friend std::ostream& operator<<(std::ostream&, const OLaRank_old&);
 
 public:
     // size of the pattern
-
     int B;
     int m;
     vector<supportData*> S;
-
     std::vector<std::pair<double, double>> velocity;
 
     // populate this first
-
     // frameNumber - location unordered map
     unordered_map<int,std::pair<double, double>> locations;
 
     void clear(){
-
         this->kern.clear();
         this->velocity.clear();
         this->locations.clear();
     };
-
-
-    //std::vector<std::pair<double,double>> locations;
-
     OLaRank_old(Kernel*,int seed=1);
     OLaRank_old(Kernel*,params&, int&, int&,int&);
 
     void setParameters(params&, int&, int&, int&);
 
-    void initialize(mat&, mat&,const int,int);
-    int processAndPredict(mat&,mat&,int);
-    void process(mat&,mat&,const int,int);
+    void initialize(const cv::Mat&, const cv::Mat&,const int,int);
+    int processAndPredict(const cv::Mat&,const cv::Mat&,int);
+    void process(const cv::Mat&,const cv::Mat&,const int,int);
 
-    double kernel(mat, mat, mat, mat);
-
-
-    double kernel_fast(mat&,mat&,int,int,mat&,mat&,int,int);
-    double calculate_kernel(mat&,int,mat&,int);
+    double kernel_fast(const cv::Mat&,const cv::Mat&,int,int,const cv::Mat&,const cv::Mat&,int,int);
+    double calculate_kernel(const cv::Mat&,int,const cv::Mat&,int);
 
     double calculateObjective();
-    double loss(const mat, const mat);
+    double loss(const cv::Mat&, const cv::Mat&);
 
-    tuple<mat, mat, mat> processNew(mat&, mat&, const int,int);
+    tuple<cv::Mat, cv::Mat, cv::Mat> processNew(const cv::Mat&, const cv::Mat&,
+                                                int,int);
     int budgetMaintance();
 
-    void smoStep(const int, mat&, mat&);
+    void smoStep( int, const cv::Mat&, const cv::Mat&);
 
     void testIfObjectiveIncreases();
-    tuple<int, mat, mat> processOld();
-    tuple<int, mat, mat> optimize();
+    tuple<int, cv::Mat, cv::Mat> processOld();
+    tuple<int, cv::Mat, cv::Mat> optimize();
 
     void checkIfConstraintsSatisfied();
 
-    int predict(mat&);
+    int predict(const cv::Mat&);
 
-    rowvec predictAll(mat&);
-    void learn(mat&,mat&);
+    std::vector<double> predictAll(const cv::Mat&);
+    void learn(const cv::Mat&,const cv::Mat&);
 
     double recomputeGradient(int i,int y);
     void deleteKernelValues(int frameNumber);

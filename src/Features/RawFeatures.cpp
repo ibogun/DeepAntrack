@@ -18,14 +18,11 @@
  */
 cv::Mat RawFeatures:: prepareImage(cv::Mat *imageIn){
     
-    
     cv::Mat image=*imageIn;
     cv::Mat gray(image.rows,image.cols,CV_16S);
     cv::cvtColor(image, gray, CV_BGR2GRAY);
-    
-    
+
     return gray;
-    
 }
 
 
@@ -38,13 +35,13 @@ cv::Mat RawFeatures:: prepareImage(cv::Mat *imageIn){
  *
  *  @return matrix with normalized features
  */
-arma::mat RawFeatures:: calculateFeature(cv::Mat& gray, std::vector<cv::Rect> &locationsInCropped){
+cv::Mat RawFeatures:: calculateFeature( cv::Mat& gray, std::vector<cv::Rect> &locationsInCropped){
     
     
     int m=this->calculateFeatureDimension();
     int n=(int)locationsInCropped.size();
     
-    arma::mat x(n,m,arma::fill::zeros);
+    cv::Mat x = cv::Mat::zeros(n,m, CV_64F);
     
     for (int i=0; i<n; i++) {
         
@@ -58,7 +55,7 @@ arma::mat RawFeatures:: calculateFeature(cv::Mat& gray, std::vector<cv::Rect> &l
                 
                 int pixel=(int)cropped.at<uchar>(j,k);
                 
-                x(i,j*size+k)=(pixel*(1.0))/(255);
+                x.at<double>(i,j*size+k)=(pixel*(1.0))/(255);
         
             }
         }

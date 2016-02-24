@@ -267,14 +267,14 @@ float DatasetVOT2014::findAngle(cv::Point2f pts[]){
     double height=dist(pts[0],pts[1]);
 
 
-    arma::mat x_new(2,2,arma::fill::zeros);
+    cv::Mat x_new = cv::Mat::zeros(2,2, CV_64F);
 
-    arma::mat x_old(2,2,arma::fill::zeros);
+    cv::Mat x_old = cv::Mat::zeros(2,2, CV_64F);
 
-    x_new(0,0)=-width/2;
-    x_new(1,0)=-height/2;
-    x_new(0,1)=width/2;
-    x_new(1,1)=-height/2;
+    x_new.at<double>(0,0)=-width/2;
+    x_new.at<double>(1,0)=-height/2;
+    x_new.at<double>(0,1)=width/2;
+    x_new.at<double>(1,1)=-height/2;
 
 
     cv::Point2f leftmost=pts[0];
@@ -294,20 +294,20 @@ float DatasetVOT2014::findAngle(cv::Point2f pts[]){
 //        }
 //    }
 
-    x_old(0,0)=leftmost.x;
-    x_old(1,0)=leftmost.y;
-    x_old(0,1)=uppermost.x;
-    x_old(1,1)=uppermost.y;
+    x_old.at<double>(0,0)=leftmost.x;
+    x_old.at<double>(1,0)=leftmost.y;
+    x_old.at<double>(0,1)=uppermost.x;
+    x_old.at<double>(1,1)=uppermost.y;
 
 
-    arma::mat rho=x_new*inv(x_old);
+    cv::Mat rho=x_new*x_old.inv();
 
 
     // std::cout<<rho<<std::endl;
 
 
 
-    double angle=(180/M_PI)*std::acos(rho(0,0));
+    double angle=(180/M_PI)*std::acos(rho.at<double>(0,0));
 //
 //
 //    float angleinDegree=atan2f(deltaX, deltaY)*(180/M_PI);
