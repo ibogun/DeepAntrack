@@ -1,6 +1,7 @@
 language: cpp
 
 before_install:
+- pip install --user codecov
 - if [ "$CXX" == "g++" ]; then  sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; fi
 - if [ "$CXX" == "g++" ]; then sudo apt-get update -qq; fi
 # gcc 4.9
@@ -23,6 +24,9 @@ before_script:
   - cmake -Dtest=on -DDeepFeatures=OFF ..
 
 script: make && ./bin/RunUnitTests
+
+after_success:
+  - codecov
 
 branches:
   only:
