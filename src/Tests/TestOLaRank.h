@@ -27,6 +27,7 @@ protected:
   armadillo::OLaRank_old* arma_olarank;
    const double PRECISION = 0.00001;
   DrawRandomImage* draw;
+
   TestOLaRank() {
           Kernel* kernel = new LinearKernel;
           armadillo::Kernel* arma_kernel = new armadillo::LinearKernel;

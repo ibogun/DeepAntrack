@@ -53,6 +53,60 @@ arma::mat convertCVToMat(const cv::Mat &m1) {
     return c;
 }
 
+TEST_F(TestOLaRank, calculate_kernel) {
+    cv::Mat cvf1 = draw->getRandomFloatMatrix();
+    cv::Mat cvf2 = draw->getRandomFloatMatrix();
+
+    arma::mat armaf1 = convertCVToMat(cvf1);
+    arma::mat armaf2 = convertCVToMat(cvf2);
+
+    int r = draw->window_height;
+    int c = draw->window_width;
+
+    for (int i = 0; i < r; i++) {
+        for (int j = 0; j < r; j++) {
+            ASSERT_NEAR(olarank->calculate_kernel(cvf1, i, cvf2, j),
+                        arma_olarank->calculate_kernel(armaf1, i, armaf2, j),
+                        this->PRECISION);
+        }
+    }
+}
+
+TEST_F(TestOLaRank, kernel_fast) {
+    cv::Mat cvf1 = draw->getRandomFloatMatrix();
+    cv::Mat cvf2 = draw->getRandomFloatMatrix();
+
+    arma::mat armaf1 = convertCVToMat(cvf1);
+    arma::mat armaf2 = convertCVToMat(cvf2);
+
+    int r = draw->window_height;
+    int c = draw->window_width;
+
+    cv::Mat cvBox1 = draw->getRandomBoundingBox(r, c);
+    cv::Mat cvBox2 = draw->getRandomBoundingBox(r, c);
+
+    CHECK(cvBox1.at<double>(0, 1) + cvBox1.at<double>(0, 3) < r);
+    CHECK(cvBox1.at<double>(0, 2) + cvBox1.at<double>(0, 4) < c);
+
+    CHECK(cvBox2.at<double>(0, 1) + cvBox2.at<double>(0, 3) < r);
+    CHECK(cvBox2.at<double>(0, 2) + cvBox2.at<double>(0, 4) < c);
+
+    arma::mat armaBox1 = convertCVToMat(cvBox1);
+    arma::mat armaBox2 = convertCVToMat(cvBox2);
+
+    for (int i = 0; i < r; i++) {
+        for (int j = 0; j < r; j++) {
+            // The implementation is not using cvBox1, cvBox2, armaBox1,
+            // armaBox2 arugments
+            ASSERT_NEAR(
+                olarank->kernel_fast(cvf1, cvBox1, i, -1, cvf2, cvBox2, j, -2),
+                arma_olarank->kernel_fast(armaf1, armaBox1, i, -1, armaf2,
+                                          armaBox2, j, -2),
+                this->PRECISION);
+        }
+    }
+}
+
 TEST_F(TestOLaRank, matToCVConversion) {
     cv::Mat image = draw->getRandomFloatMatrix();
 

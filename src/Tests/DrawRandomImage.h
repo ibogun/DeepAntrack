@@ -18,6 +18,8 @@
 #include <stdio.h>
 
 class DrawRandomImage {
+
+public:
     /// Global Variables
     const int NUMBER = 100;
     const int DELAY = 0;
@@ -31,7 +33,7 @@ class DrawRandomImage {
     int y_1 = -window_width/2;
     int y_2 = window_width*3/2;
     
-public:
+
     /// Function headers
     DrawRandomImage() {this->seed = 1;
         srand(this->seed);};
@@ -50,6 +52,8 @@ public:
     
     cv::Mat getRandomImage();
     cv::Mat getRandomFloatMatrix();
+
+    cv::Mat getRandomBoundingBox(int rows, int cols);
 };
 
 #endif /* defined(__Robust_tracking_by_detection__DrawRandomImage__) */
