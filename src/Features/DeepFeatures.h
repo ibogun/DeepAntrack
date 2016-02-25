@@ -20,14 +20,13 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
 #include "caffe/util/io.hpp"
-#include "caffe/vision_layers.hpp"
-
+#include "caffe/layers/memory_data_layer.hpp"
 
 class DeepFeatures:public Feature {
 private:
 
-        const int imageSizeWidth = 256;
-        const int imageSizeHeight = 256;
+        static const int imageSizeWidth = 256;
+        static const int imageSizeHeight = 256;
 
         boost::shared_ptr<caffe::Net<float> > caffe_net;
 public:

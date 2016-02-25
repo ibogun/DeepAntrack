@@ -10,6 +10,7 @@
 #include "DrawRandomImage.h"
 
 
+#include "boost/tuple/tuple.hpp"
 #include "../Kernels/Kernel.h"
 #include "../Kernels/LinearKernel.h"
 #include "../Tracker/OLaRank_old.h"
@@ -70,7 +71,7 @@ protected:
   virtual void TearDown(){};
   std::vector<cv::Rect> getLocations(const cv::Mat& image, int n);
 
-  std::tuple<cv::Mat, cv::Mat, int, int> prepareForProcessNew(int boxes = 100);
+  boost::tuple<cv::Mat, cv::Mat, int, int> prepareForProcessNew(int boxes = 100);
   bool isSetOLaRankSetS_equal();
   bool isSupportVectorEqual(supportData* s, armadillo::supportData* arma_s);
 

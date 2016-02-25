@@ -10,7 +10,7 @@
 #define ARMA_OLARANK_OLD_H_
 #include <vector>
 
-#include <tuple>
+#include "boost/tuple/tuple.hpp"
 #include "armadillo"
 
 #include "arma_Kernel.h"
@@ -113,14 +113,14 @@ namespace armadillo {
     double calculateObjective();
     double loss(const mat, const mat);
 
-    tuple<mat, mat, mat> processNew(mat &, mat &, const int, int);
+    boost::tuple<mat, mat, mat> processNew(mat &, mat &, const int, int);
     int budgetMaintance();
 
     void smoStep(const int, mat &, mat &);
 
     void testIfObjectiveIncreases();
-    tuple<int, mat, mat> processOld();
-    tuple<int, mat, mat> optimize();
+    boost::tuple<int, mat, mat> processOld();
+    boost::tuple<int, mat, mat> optimize();
 
     void checkIfConstraintsSatisfied();
 

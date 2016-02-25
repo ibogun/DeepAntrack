@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <vector>
-#include <tuple>
 #include <glog/logging.h>
 #include "TestOLaRank.h"
 
@@ -118,27 +117,27 @@ std::vector<cv::Rect> TestOLaRank::getLocations(const cv::Mat &image,
 }
 
 void TestOLaRank::performProcessNewAndSMOAndbudget() {
-    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+    boost::tuple<cv::Mat, cv::Mat, int, int> processNewData =
         this->prepareForProcessNew();
 
-    cv::Mat newX = std::get<0>(processNewData);
-    cv::Mat y_hat = std::get<1>(processNewData);
-    int label = std::get<2>(processNewData);
-    int frameNumber = std::get<3>(processNewData);
+    cv::Mat newX = boost::get<0>(processNewData);
+    cv::Mat y_hat = boost::get<1>(processNewData);
+    int label = boost::get<2>(processNewData);
+    int frameNumber = boost::get<3>(processNewData);
 
     arma::mat arma_newX = convertCVToMat(newX);
     arma::mat arma_y_hat = convertCVToMat(y_hat);
 
-    std::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
+    boost::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
         this->olarank->processNew(newX, y_hat, label, frameNumber);
 
-    std::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
+    boost::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
         this->arma_olarank->processNew(arma_newX, arma_y_hat, label,
                                        frameNumber);
 
     cv::Mat y_plus, y_neg;
     cv::Mat grad = cv::Mat::zeros(1, newX.rows, CV_64F);
-    std::tie(y_plus, y_neg, grad) = p_new;
+    boost::tie(y_plus, y_neg, grad) = p_new;
 
     // add new element into set S
     supportData *support =
@@ -152,7 +151,7 @@ void TestOLaRank::performProcessNewAndSMOAndbudget() {
 
     arma::mat mat_y_plus, mat_y_neg;
     arma::mat mat_grad(1, arma_newX.n_rows, arma::fill::zeros);
-    std::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
+    boost::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
 
     // add new element into set S
     armadillo::supportData *arma_support = new armadillo::supportData(
@@ -178,15 +177,15 @@ TEST_F(TestOLaRank, testProcessOld) {
 
     double i;
     cv::Mat y_plus, y_neg;
-    std::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
+    boost::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
 
-    tie(i, y_plus, y_neg) = p_old;
+    boost::tie(i, y_plus, y_neg) = p_old;
 
     arma::mat arma_y_plus, arma_y_neg;
-    std::tuple<double, arma::mat, arma::mat> arma_p_old =
+    boost::tuple<double, arma::mat, arma::mat> arma_p_old =
         this->arma_olarank->processOld();
 
-    tie(i, arma_y_plus, arma_y_neg) = arma_p_old;
+    boost::tie(i, arma_y_plus, arma_y_neg) = arma_p_old;
 
     assert(isSetOLaRankSetS_equal());
 
@@ -204,15 +203,16 @@ TEST_F(TestOLaRank, testOptimize) {
 
     double i;
     cv::Mat y_plus, y_neg;
-    std::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
+    boost::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
 
-    tie(i, y_plus, y_neg) = p_old;
+    boost::tie(i, y_plus, y_neg) = p_old;
 
     arma::mat arma_y_plus, arma_y_neg;
-    std::tuple<double, arma::mat, arma::mat> arma_p_old =
+    boost::tuple<double, arma::mat, arma::mat> arma_p_old =
         this->arma_olarank->processOld();
 
-    tie(i, arma_y_plus, arma_y_neg) = arma_p_old;
+    double arma_i;
+    boost::tie(arma_i, arma_y_plus, arma_y_neg) = arma_p_old;
 
     assert(isSetOLaRankSetS_equal());
 
@@ -224,10 +224,27 @@ TEST_F(TestOLaRank, testOptimize) {
     this->arma_olarank->budgetMaintance();
     assert(isSetOLaRankSetS_equal());
 
-    std::tuple<double, cv::Mat, cv::Mat> optimize = this->olarank->optimize();
+
+    boost::tuple<double, cv::Mat, cv::Mat> optimize = this->olarank->optimize();
+    boost::tie(i, y_plus, y_neg) = optimize;
+
+    boost::tuple<double, arma::mat, arma::mat> arma_optimize =
+        this->arma_olarank->optimize();
+
+    boost::tie(arma_i, arma_y_plus, arma_y_neg) = arma_optimize;
+
+    assert(i == arma_i);
+    assert(isEqual(arma_y_plus, y_plus));
+    assert(isEqual(arma_y_neg, y_neg));
+
+    assert(isSetOLaRankSetS_equal());
+    this->olarank->smoStep(i, y_plus, y_neg);
+    this->arma_olarank->smoStep(arma_i, arma_y_plus, arma_y_neg);
+
+    assert(isSetOLaRankSetS_equal());
 }
 
-std::tuple<cv::Mat, cv::Mat, int, int>
+boost::tuple<cv::Mat, cv::Mat, int, int>
 TestOLaRank::prepareForProcessNew(int boxes) {
     cv::Mat image = draw->getRandomImage();
 
@@ -252,34 +269,34 @@ TestOLaRank::prepareForProcessNew(int boxes) {
     this->olarank->S.push_back(s1);
     this->arma_olarank->S.push_back(arma_s1);
 
-    std::tuple<cv::Mat, cv::Mat, int, int> result =
-        std::make_tuple(x, y, label, frameNumber);
+    boost::tuple<cv::Mat, cv::Mat, int, int> result =
+        boost::make_tuple(x, y, label, frameNumber);
 
     return result;
 }
 
 TEST_F(TestOLaRank, smoStep) {
-    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+    boost::tuple<cv::Mat, cv::Mat, int, int> processNewData =
         this->prepareForProcessNew();
 
-    cv::Mat newX = std::get<0>(processNewData);
-    cv::Mat y_hat = std::get<1>(processNewData);
-    int label = std::get<2>(processNewData);
-    int frameNumber = std::get<3>(processNewData);
+    cv::Mat newX = boost::get<0>(processNewData);
+    cv::Mat y_hat = boost::get<1>(processNewData);
+    int label = boost::get<2>(processNewData);
+    int frameNumber = boost::get<3>(processNewData);
 
     arma::mat arma_newX = convertCVToMat(newX);
     arma::mat arma_y_hat = convertCVToMat(y_hat);
 
-    std::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
+    boost::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
         this->olarank->processNew(newX, y_hat, label, frameNumber);
 
-    std::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
+    boost::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
         this->arma_olarank->processNew(arma_newX, arma_y_hat, label,
                                        frameNumber);
 
     cv::Mat y_plus, y_neg;
     cv::Mat grad = cv::Mat::zeros(1, newX.rows, CV_64F);
-    std::tie(y_plus, y_neg, grad) = p_new;
+    boost::tie(y_plus, y_neg, grad) = p_new;
 
     // add new element into set S
     supportData *support =
@@ -293,7 +310,7 @@ TEST_F(TestOLaRank, smoStep) {
 
     arma::mat mat_y_plus, mat_y_neg;
     arma::mat mat_grad(1, arma_newX.n_rows, arma::fill::zeros);
-    std::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
+    boost::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
 
     // add new element into set S
     armadillo::supportData *arma_support = new armadillo::supportData(
@@ -315,30 +332,30 @@ TEST_F(TestOLaRank, smoStep) {
 }
 
 TEST_F(TestOLaRank, processNew) {
-    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+    boost::tuple<cv::Mat, cv::Mat, int, int> processNewData =
         this->prepareForProcessNew();
 
-    cv::Mat x = std::get<0>(processNewData);
-    cv::Mat y = std::get<1>(processNewData);
-    int label = std::get<2>(processNewData);
-    int frameNumber = std::get<3>(processNewData);
+    cv::Mat x = boost::get<0>(processNewData);
+    cv::Mat y = boost::get<1>(processNewData);
+    int label = boost::get<2>(processNewData);
+    int frameNumber = boost::get<3>(processNewData);
 
     arma::mat arma_x = convertCVToMat(x);
     arma::mat arma_y = convertCVToMat(y);
 
-    std::tuple<cv::Mat, cv::Mat, cv::Mat> processNewOutput =
+    boost::tuple<cv::Mat, cv::Mat, cv::Mat> processNewOutput =
         this->olarank->processNew(x, y, label, frameNumber);
 
-    std::tuple<arma::mat, arma::mat, arma::mat> arma_processNewOutput =
+    boost::tuple<arma::mat, arma::mat, arma::mat> arma_processNewOutput =
         this->arma_olarank->processNew(arma_x, arma_y, label, frameNumber);
 
-    cv::Mat r_1 = std::get<0>(processNewOutput);
-    cv::Mat r_2 = std::get<1>(processNewOutput);
-    cv::Mat r_3 = std::get<2>(processNewOutput);
+    cv::Mat r_1 = boost::get<0>(processNewOutput);
+    cv::Mat r_2 = boost::get<1>(processNewOutput);
+    cv::Mat r_3 = boost::get<2>(processNewOutput);
 
-    arma::mat arma_r_1 = std::get<0>(arma_processNewOutput);
-    arma::mat arma_r_2 = std::get<1>(arma_processNewOutput);
-    arma::mat arma_r_3 = std::get<2>(arma_processNewOutput);
+    arma::mat arma_r_1 = boost::get<0>(arma_processNewOutput);
+    arma::mat arma_r_2 = boost::get<1>(arma_processNewOutput);
+    arma::mat arma_r_3 = boost::get<2>(arma_processNewOutput);
 
     assert(isEqual(arma_r_1, r_1));
     assert(isEqual(arma_r_2, r_2));

@@ -9,7 +9,6 @@
 #define ARMA_NO_DEBUG
 #include <vector>
 #include "arma_OLaRank_old.h"
-#include <tuple>
 #include "armadillo"
 #include <math.h>
 #include <assert.h>
@@ -90,7 +89,7 @@ void armadillo::OLaRank_old::checkIfConstraintsSatisfied() {
  * @return 				- 		triplet
  * (y_plus,y_neg,gradient)
  */
-tuple<mat, mat, mat> armadillo::OLaRank_old::processNew(mat &newX, mat &y_hat,
+boost::tuple<mat, mat, mat> armadillo::OLaRank_old::processNew(mat &newX, mat &y_hat,
                                                         const int label,
                                                         int frameNumber) {
     // calculate gradient for the new example
@@ -142,8 +141,8 @@ tuple<mat, mat, mat> armadillo::OLaRank_old::processNew(mat &newX, mat &y_hat,
     }
 
     // tuple<mat, mat, mat> result = make_tuple(y_plus, y_neg, grad);
-    tuple<mat, mat, mat> result =
-        make_tuple(y_hat.row(label), y_hat.row(y_neg_idx), grad);
+    boost::tuple<mat, mat, mat> result =
+        boost::make_tuple(y_hat.row(label), y_hat.row(y_neg_idx), grad);
     return result;
 }
 
@@ -413,7 +412,7 @@ void armadillo::OLaRank_old::smoStep(const int i, mat &y_plus, mat &y_neg) {
  *
  * @return triplet for SMOstep
  */
-tuple<int, mat, mat> armadillo::OLaRank_old::processOld() {
+boost::tuple<int, mat, mat> armadillo::OLaRank_old::processOld() {
 
     int i = rand() % this->S.size();
 
@@ -444,7 +443,7 @@ tuple<int, mat, mat> armadillo::OLaRank_old::processOld() {
         cout << "--------------------" << endl;
     }
 
-    tuple<int, mat, mat> result = make_tuple(i, y_plus, y_neg);
+    boost::tuple<int, mat, mat> result = boost::make_tuple(i, y_plus, y_neg);
     return result;
 }
 
@@ -453,7 +452,7 @@ tuple<int, mat, mat> armadillo::OLaRank_old::processOld() {
  *
  * @return triplet for SMOstep
  */
-tuple<int, mat, mat> armadillo::OLaRank_old::optimize() {
+boost::tuple<int, mat, mat> armadillo::OLaRank_old::optimize() {
 
     int i = rand() % this->S.size();
 
@@ -510,7 +509,7 @@ tuple<int, mat, mat> armadillo::OLaRank_old::optimize() {
         cout << "--------------------" << endl;
     }
 
-    tuple<int, mat, mat> result = make_tuple(i, y_plus, y_neg);
+    boost::tuple<int, mat, mat> result = boost::make_tuple(i, y_plus, y_neg);
     return result;
 }
 
@@ -745,12 +744,12 @@ int armadillo::OLaRank_old::processAndPredict(mat &newX, mat &newY,
 
     // mat y_hat=newY.row(y_hat_idx);
 
-    tuple<mat, mat, mat> p_new =
+    boost::tuple<mat, mat, mat> p_new =
         this->processNew(newX, newY, y_hat_idx, frameNumber);
 
     mat y_plus, y_neg;
     mat grad(1, newX.n_rows, fill::zeros);
-    tie(y_plus, y_neg, grad) = p_new;
+    boost::tie(y_plus, y_neg, grad) = p_new;
 
     // add new element into set S
     supportData *support = new supportData(newX, newY, y_hat_idx, newX.size(),
@@ -781,8 +780,8 @@ int armadillo::OLaRank_old::processAndPredict(mat &newX, mat &newY,
 
         if (this->S.size() != 0) {
 
-            tuple<double, mat, mat> p_old = this->processOld();
-            tie(i, y_plus, y_neg) = p_old;
+            boost::tuple<double, mat, mat> p_old = this->processOld();
+            boost::tie(i, y_plus, y_neg) = p_old;
 
             smoStep(i, y_plus, y_neg);
 
@@ -793,9 +792,9 @@ int armadillo::OLaRank_old::processAndPredict(mat &newX, mat &newY,
 
         for (int j = 0; j < this->parameters.n_O; ++j) {
             if (this->S.size() != 0) {
-                tuple<double, mat, mat> optimize = this->optimize();
+                boost::tuple<double, mat, mat> optimize = this->optimize();
 
-                tie(i, y_plus, y_neg) = optimize;
+                boost::tie(i, y_plus, y_neg) = optimize;
                 smoStep(i, y_plus, y_neg);
             }
             // this->checkIfConstraintsSatisfied();
@@ -821,12 +820,12 @@ int armadillo::OLaRank_old::processAndPredict(mat &newX, mat &newY,
 void armadillo::OLaRank_old::process(mat &newX, mat &y_hat, int y_hat_label,
                                      int frameNumber) {
 
-    tuple<mat, mat, mat> p_new =
+    boost::tuple<mat, mat, mat> p_new =
         this->processNew(newX, y_hat, y_hat_label, frameNumber);
 
     mat y_plus, y_neg;
     mat grad(1, newX.n_rows, fill::zeros);
-    tie(y_plus, y_neg, grad) = p_new;
+    boost::tie(y_plus, y_neg, grad) = p_new;
 
     // add new element into set S
     supportData *support = new supportData(
@@ -844,8 +843,8 @@ void armadillo::OLaRank_old::process(mat &newX, mat &y_hat, int y_hat_label,
 
     for (int ii = 0; ii < this->parameters.n_R; ++ii) {
 
-        tuple<double, mat, mat> p_old = this->processOld();
-        tie(i, y_plus, y_neg) = p_old;
+        boost::tuple<double, mat, mat> p_old = this->processOld();
+        boost::tie(i, y_plus, y_neg) = p_old;
 
         smoStep(i, y_plus, y_neg);
 
@@ -854,9 +853,9 @@ void armadillo::OLaRank_old::process(mat &newX, mat &y_hat, int y_hat_label,
         budgetMaintance();
 
         for (int j = 0; j < this->parameters.n_O; ++j) {
-            tuple<double, mat, mat> optimize = this->optimize();
+            boost::tuple<double, mat, mat> optimize = this->optimize();
 
-            tie(i, y_plus, y_neg) = optimize;
+            boost::tie(i, y_plus, y_neg) = optimize;
             smoStep(i, y_plus, y_neg);
 
             // this->checkIfConstraintsSatisfied();
@@ -878,9 +877,9 @@ void armadillo::OLaRank_old::testIfObjectiveIncreases() {
 
     for (int ii = 0; ii < this->parameters.n_R; ++ii) {
         for (int j = 0; j < 1; ++j) {
-            tuple<double, mat, mat> optimize = this->optimize();
+            boost::tuple<double, mat, mat> optimize = this->optimize();
 
-            tie(i, y_plus, y_neg) = optimize;
+            boost::tie(i, y_plus, y_neg) = optimize;
 
             cout << "Beta (should be non zero): " << this->S[i]->beta << "\n";
             cout << "Label for the current pattern: " << this->S[i]->label
@@ -907,7 +906,7 @@ void armadillo::OLaRank_old::initialize(mat &x, mat &y, const int label,
     this->process(x, y, label, frameNumber);
 }
 
-tuple<mat, vec> generateInput(const int &n, const int &m, const double step) {
+boost::tuple<mat, vec> generateInput(const int &n, const int &m, const double step) {
 
     mat x(n, m, fill::zeros);
     vec y(n, fill::ones);
@@ -964,7 +963,7 @@ tuple<mat, vec> generateInput(const int &n, const int &m, const double step) {
         y.subvec(i, i) = ycopy.subvec(myvector[i], myvector[i]);
     }
 
-    tuple<mat, vec> result(x, y);
+    boost::tuple<mat, vec> result(x, y);
     return result;
 }
 

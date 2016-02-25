@@ -1,6 +1,8 @@
 .DS_Store
 *.vim
 *.swp
+
+data/*
 build/*
 bin/*
 xcode/*

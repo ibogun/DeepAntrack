@@ -19,10 +19,10 @@ IF (DeepFeatures)
   find_package(Caffe REQUIRED)
 ENDIF()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x  -fsanitize=address -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 find_package(OpenCV REQUIRED )
 find_package (Threads REQUIRED)
-find_package( Boost COMPONENTS program_options python filesystem system)
+find_package(Boost COMPONENTS program_options  filesystem system regex)
 find_package(gflags REQUIRED)
 find_library(GLOG_LIBRARY glog)
 
@@ -61,16 +61,9 @@ set(Experiment_01
 	src/Experiments/Experiment_efficient_int_kernel.h
 )
 
-set(Superpixels
-   src/Superpixels/helper.h
-   src/Superpixels/seeds2.h
-   src/Superpixels/seeds2.cpp
-   src/Superpixels/Plot.h
-   src/Superpixels/Plot.cpp
-   src/Superpixels/SuperPixels.h
-   src/Superpixels/SuperPixels.cpp
-   src/Superpixels/Objectness.h
-   src/Superpixels/Objectness.cpp
+FILE(GLOB Superpixels
+    src/Superpixels/*.h
+   src/Superpixels/*.cpp
    )
 
 
@@ -95,7 +88,6 @@ FILE(GLOB SOURCE_FILES
 
 
 
-find_package( Boost COMPONENTS filesystem system REQUIRED )
 add_executable(robust_struck_tracker_v1.0 ${Superpixels} ${SOURCE_FILES} ${PROJECT_MAIN})
 
 include_directories(${OpenCV_INCLUDE_DIRS} )
@@ -150,7 +142,7 @@ endif()
 
 if(VOT2015)
 	set(VOT2015_DESTINATION "../matlab/build/bin/")
-	find_package( Boost COMPONENTS program_options filesystem system  REQUIRED )
+
 
 	include_directories( ${Boost_INCLUDE_DIR} )
     add_executable(struck_vot2014 ${Superpixels} ${SOURCE_FILES} ${TRAX_FILES})
@@ -170,7 +162,6 @@ if(python)
     set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/Antrack/")
 
 	find_package(PythonLibs)
-    find_package( Boost COMPONENTS python filesystem system)
 
     PYTHON_ADD_MODULE(antrack ${SOURCE_FILES}
       ${PYTHON_FILES_Tracker} ${Superpixels})

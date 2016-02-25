@@ -346,48 +346,6 @@ inline cv::Rect LocationSampler::fromCenterToBoundingBox(const double &x,
   return result;
 }
 
-template <typename T>
-std::vector<size_t> LocationSampler::sort_indexes(const std::vector<T> &v) {
-  using namespace std;
-  // initialize original index locations
-  vector<size_t> idx(v.size());
-  for (size_t i = 0; i != idx.size(); ++i)
-    idx[i] = i;
-
-  // sort indexes based on comparing values in v
-  sort(idx.begin(), idx.end(),
-       [&v](size_t i1, size_t i2) { return v[i1] < v[i2]; });
-
-  return idx;
-}
-
-void LocationSampler::rearrangeByDimensionSimilarity(
-    const cv::Rect &rect, std::vector<int> &radiuses, std::vector<int> &widths,
-    std::vector<int> &heights) {
-
-  std::vector<double> ratios;
-  int h = rect.height;
-  int w = rect.width;
-  for (int i = 0; i < radiuses.size(); ++i) {
-    double current_ration =
-        sqrt(pow(widths[i] - h, 2) + pow(heights[i] - h, 2));
-    ratios.push_back(current_ration);
-  }
-  std::vector<size_t> indices = sort_indexes(ratios);
-
-  std::vector<int> radiuses_sorted;
-  std::vector<int> widths_sorted;
-  std::vector<int> heights_sorted;
-
-  for (int j = 0; j < radiuses.size(); ++j) {
-    radiuses_sorted.push_back(radiuses[indices[j]]);
-    widths_sorted.push_back(widths[indices[j]]);
-    heights_sorted.push_back(heights[indices[j]]);
-  }
-  radiuses = radiuses_sorted;
-  widths = widths_sorted;
-  heights = heights_sorted;
-}
 
 std::ostream &operator<<(std::ostream &strm, const LocationSampler &s) {
 

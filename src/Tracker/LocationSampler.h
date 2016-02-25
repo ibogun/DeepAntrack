@@ -16,8 +16,8 @@
 class LocationSampler {
     int radius;
 
-    int n=0;
-    int m=0;
+    int n;
+    int m;
 
     cv::Rect fromCenterToBoundingBox(const double&,const double&,const double&,
                                      const double&);
@@ -31,15 +31,15 @@ public:
 
     int nRadial;
     int nAngular;
-    double downsample = 1.05;
-    int min_scales = -4;
-    int max_scales = 8;
-    int shrink_one_side_scale = 2;
+    double downsample;
+    const static int min_scales = -4;
+    const static int max_scales = 8;
+    const static int shrink_one_side_scale = 2;
 
-    int min_size_half = 10; // minumum size of the side
+    const static int min_size_half = 10; // minumum size of the side
 
 LocationSampler(int r,int nRad, int nAng)
-    : radius(r),nRadial(nRad), nAngular(nAng){}
+    : radius(r),nRadial(nRad), nAngular(nAng), downsample(1.05){}
 
     void sampleOnAGrid(cv::Rect& currentRect,std::vector<cv::Rect>& rects,
                        int R,int distance=1);
@@ -47,12 +47,6 @@ LocationSampler(int r,int nRad, int nAng)
     int getRadius(){
         return this->radius;
     }
-    template <typename T>
- static std::vector<size_t> sort_indexes(const std::vector<T> &v) ;
-
-    void rearrangeByDimensionSimilarity(const cv::Rect& rect,
-    std::vector<int>& radiuses, std::vector<int>& widths,
-    std::vector<int>& heights);
 
     void sampleEquiDistant(cv::Rect& currentRect,std::vector<cv::Rect>& rects);
 

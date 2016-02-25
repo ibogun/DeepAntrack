@@ -7,8 +7,7 @@
 
 #include "DatasetWu2013.h"
 #include "DatasetWu2015.h"
-#include "DatasetALOV300.h"
-#include "DatasetVOT2014.h"
-#include "DatasetVOT2015.h"
+//#include "DatasetALOV300.h"
+//#include "DatasetVOT2014.h"
 
 #endif //ROBUST_TRACKING_BY_DETECTION_ALLDATASETS_H

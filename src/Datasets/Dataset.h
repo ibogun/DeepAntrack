@@ -13,9 +13,8 @@
 #include <string>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include <unordered_map>
-
-typedef std::unordered_map<std::string, int> hashtable;
+#include <boost/unordered_map.hpp>
+typedef boost::unordered_map<std::string, int> hashtable;
 class Dataset {
 
 

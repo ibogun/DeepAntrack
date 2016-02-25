@@ -8,6 +8,8 @@
 
 #include "Struck.h"
 #include <math.h>
+#include "boost/filesystem/operations.hpp"  // includes boost/filesystem/path.hpp
+#include "boost/filesystem/fstream.hpp"     // ditto
 
 void Struck::initialize(cv::Mat &image, cv::Rect &location,
                         int updateEveryNFrames, double b, int P, int R, int Q) {
@@ -175,11 +177,7 @@ cv::Rect Struck::track(cv::Mat &image) {
         cv::Scalar color(255, 0, 0);
 
         cv::Mat plotImg;
-        if (this->useEdgeDensity || this->useStraddling) {
-            plotImg = this->objectnessCanvas;
-        } else {
-            plotImg = image.clone();
-        }
+        plotImg = image.clone();
 
         cv::rectangle(plotImg, lastLocation, color, 2);
 
@@ -190,32 +188,7 @@ cv::Rect Struck::track(cv::Mat &image) {
                           0);
         }
 
-        if (this->useEdgeDensity || this->useStraddling) {
 
-            cv::rectangle(plotImg, lastLocationObjectness,
-                          cv::Scalar(0, 204, 102), 0);
-
-            cv::Mat objPlot = this->objPlot->getCanvas();
-            cv::resize(objPlot, objPlot, cv::Size(image.cols, image.rows));
-
-            cv::Rect bottomLeftRect(image.rows + 1, 0, objPlot.rows,
-                                    objPlot.cols);
-            cv::rectangle(plotImg, this->gtBox, cv::Scalar(0, 0, 255), 0);
-            this->copyFromRectangleToImage(plotImg, objPlot, bottomLeftRect, 0,
-                                           cv::Vec3b(0, 0, 0));
-
-            int maxWidth = 800;
-            int maxHeight = 600;
-
-            if (plotImg.rows > maxWidth || plotImg.cols > maxHeight) {
-                cv::resize(plotImg, plotImg, cv::Size(maxWidth, maxHeight));
-            }
-
-            this->objectnessCanvas = plotImg;
-
-            cv::imshow("Tracking window", plotImg);
-            cv::waitKey(1);
-        }
     }
 
     framesTracked++;
@@ -454,75 +427,9 @@ void Struck::applyTrackerOnDataset(Dataset *dataset, std::string rootFolder,
     std::cout << "Frames per second: " << frameNumber / (1.0 * (t2 - t1))
               << std::endl;
     // std::cout<<"No threads: "<<(t2-t1)<<std::endl;
-
-    std::ofstream out(saveFolder + "/" + "tracker_info.txt");
+    boost::filesystem::ofstream out(saveFolder + "/" + "tracker_info.txt");
     out << this;
     out.close();
-}
-
-EvaluationRun Struck::applyTrackerOnVideoWithinRange(
-    Dataset *dataset, std::string rootFolder, std::string saveFolder,
-    int videoNumber, int frameFrom, int frameTo, bool saveResults) {
-    using namespace std;
-
-    vector<pair<string, vector<string>>> video_gt_images =
-        dataset->prepareDataset(rootFolder);
-
-    pair<string, vector<string>> gt_images = video_gt_images[videoNumber];
-
-    vector<cv::Rect> groundTruth = dataset->readGroundTruth(gt_images.first);
-
-    frameTo = MIN(frameTo, gt_images.second.size());
-
-    // delete everything which comes after frameTo
-    gt_images.second.erase(gt_images.second.begin() + frameTo,
-                           gt_images.second.end());
-    gt_images.second.erase(gt_images.second.begin(),
-                           gt_images.second.begin() + frameFrom);
-
-    groundTruth.erase(groundTruth.begin() + frameTo, groundTruth.end());
-    groundTruth.erase(groundTruth.begin(), groundTruth.begin() + frameFrom);
-
-    cv::Mat image = cv::imread(gt_images.second[0]);
-
-    this->initialize(image, groundTruth[0]);
-
-    this->objPlot->setNumpts(groundTruth.size());
-    this->objPlot->initialize();
-
-    std::time_t t1 = std::time(0);
-    for (int i = 1; i < gt_images.second.size(); i++) {
-
-        cv::Mat image = cv::imread(gt_images.second[i]);
-
-        this->setGroundTruthBox(groundTruth[i]);
-
-        cout << "Frame # " << i << "/" << gt_images.second.size() << endl;
-        this->track(image);
-    }
-
-    std::time_t t2 = std::time(0);
-
-    if (this->display > 0) {
-        std::cout << "FPS : " << gt_images.second.size() / ((t2 - t1) * 1.0)
-                  << std::endl;
-    }
-
-    if (saveResults) {
-        std::string filename = std::string(saveFolder) + "/" +
-                               dataset->videos[videoNumber] + ".dat";
-        this->saveResults(filename);
-    }
-
-    EvaluationRun run;
-
-    run.evaluate(groundTruth, this->boundingBoxes);
-
-    if (this->display > 0) {
-        std::cout << run << std::endl;
-    }
-
-    return run;
 }
 
 void Struck::copyFromRectangleToImage(cv::Mat &canvas, cv::Mat &image,
@@ -656,9 +563,7 @@ std::ostream &operator<<(std::ostream &strm, const Struck &s) {
          << *s.samplerForUpdate;
 
     strm << line << "Feature representation: \n" << line
-         << s.feature->getInfo();
-
-    strm << line << s.note << "\n";
+         << s.feature->getInfo() << "\n";
 
     strm << "========================================================\n";
     return strm;
@@ -942,11 +847,6 @@ Struck Struck::getTracker(bool pretraining, bool useFilter, bool useEdgeDensity,
     Struck tracker(olarank, features, samplerForSearch, samplerForUpdate,
                    useObjectness, scalePrior, useFilter, pretraining, display);
 
-    tracker.useStraddling = useStraddling;
-    tracker.useEdgeDensity = useEdgeDensity;
-
-    tracker.setNote(note_);
-
     return tracker;
 }
 
@@ -967,6 +867,9 @@ Struck::Struck(bool pretraining, bool useFilter, bool useEdgeDensity,
     int nRadial_search = 12;
     int nAngular_search = 30;
 
+    this->framesTracked = 0;
+    this->updateTracker = true;
+    this->updateEveryNframes = 3;
     Feature *features;
     Kernel *kernel;
 
@@ -1011,14 +914,6 @@ Struck::Struck(bool pretraining, bool useFilter, bool useEdgeDensity,
     this->display = display;
     this->objPlot = new Plot(100);
 
-    // Struck tracker(olarank, features, samplerForSearch, samplerForUpdate,
-    //               useObjectness, scalePrior, useFilter, pretraining,
-    //               display);
-
-    this->useStraddling = useStraddling;
-    this->useEdgeDensity = useEdgeDensity;
-
-    this->setNote(note_);
 }
 
 void Struck::saveResults(string filename) {
@@ -1040,7 +935,7 @@ void Struck::saveResults(string filename) {
             boxes.at<double>(i, 3) = b.height;
         }
 
-        ofstream myfile;
+        boost::filesystem::ofstream myfile;
 
         myfile.open(filename);
 

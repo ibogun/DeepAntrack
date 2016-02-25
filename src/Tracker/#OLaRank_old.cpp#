@@ -11,190 +11,190 @@
 #include <math.h>
 #include <assert.h>
 #include <iostream>
-#include <algorithm> // std::random_shuffle      // std::vector
-#include <ctime>     // std::time
-#include <cstdlib>
-#include <cfloat>
+// #include <algorithm> // std::random_shuffle      // std::vector
+// #include <ctime>     // std::time
+// #include <cstdlib>
+// #include <cfloat>
 
-using namespace std;
+// using namespace std;
 
-OLaRank_old::OLaRank_old(Kernel *svm_kernel_, int seed) {
-    srand(seed);
-    svm_kernel = svm_kernel_;
-    // this->kern=new unordered_map<Key,arma::mat,KeyHash, KeyEqual>;
-}
+// OLaRank_old::OLaRank_old(Kernel *svm_kernel_, int seed) {
+//     srand(seed);
+//     svm_kernel = svm_kernel_;
+//     // this->kern=new unordered_map<Key,arma::mat,KeyHash, KeyEqual>;
+// }
 
-/***
- *  Set parameters. Used to replace constructor with parameters.
- *
- * @param learningParams
- * @param balance
- * @param m_
- * @param K_
- * @param verbose_
- */
-void OLaRank_old::setParameters(params &learningParams, int &balance, int &m_,
-                                int &verbose_) {
-    parameters = learningParams;
-    m = m_;
-    B = balance;
-    verbose = verbose_;
-}
+// /***
+//  *  Set parameters. Used to replace constructor with parameters.
+//  *
+//  * @param learningParams
+//  * @param balance
+//  * @param m_
+//  * @param K_
+//  * @param verbose_
+//  */
+// void OLaRank_old::setParameters(params &learningParams, int &balance, int &m_,
+//                                 int &verbose_) {
+//     parameters = learningParams;
+//     m = m_;
+//     B = balance;
+//     verbose = verbose_;
+// }
 
-std::vector<double> OLaRank_old::predictAll(const cv::Mat &newX) {
-    return this->svm_kernel->predictAll(newX, this->S, this->B);
-}
+// std::vector<double> OLaRank_old::predictAll(const cv::Mat &newX) {
+//     return this->svm_kernel->predictAll(newX, this->S, this->B);
+// }
 
-/**
- * The function checks if constraints in multi-class SVM are satisfied
- */
-void OLaRank_old::checkIfConstraintsSatisfied() {
-    double sum = 0;
-    for (int i = 0; i < this->S.size(); ++i) {
-        sum = 0;
-        for (int y = 0; y < this->S[i]->x.rows; ++y) {
-            double beta_y = this->S[i]->beta.at<double>(0, y);
-            assert(beta_y <= this->parameters.C * (this->S[i]->label == y));
-            sum += beta_y;
-        }
+// /**
+//  * The function checks if constraints in multi-class SVM are satisfied
+//  */
+// void OLaRank_old::checkIfConstraintsSatisfied() {
+//     double sum = 0;
+//     for (int i = 0; i < this->S.size(); ++i) {
+//         sum = 0;
+//         for (int y = 0; y < this->S[i]->x.rows; ++y) {
+//             double beta_y = this->S[i]->beta.at<double>(0, y);
+//             assert(beta_y <= this->parameters.C * (this->S[i]->label == y));
+//             sum += beta_y;
+//         }
 
-        if (abs(sum) > 0.00001) {
-            cout << "Pattern: " << i << " out of " << this->S.size() << "\n";
-            cout << this->S[i]->beta;
-            cout << abs(sum) << " \n";
-        }
+//         if (abs(sum) > 0.00001) {
+//             cout << "Pattern: " << i << " out of " << this->S.size() << "\n";
+//             cout << this->S[i]->beta;
+//             cout << abs(sum) << " \n";
+//         }
 
-        assert(abs(sum) < 0.00001);
-    }
-}
+//         assert(abs(sum) < 0.00001);
+//     }
+// }
 
-/**
- * The function calculates gradient for newly added pattern and a label; it also
- * produces (y_plus,y_neg, gradient)
- *
- * @param newX			- 		pattern
- * @param y_hat 		- 		label ( set of possible
- * positions)
- * @param label 		- 		predicted position
- * @return 				- 		triplet
- * (y_plus,y_neg,gradient)
- */
-boost::tuple<cv::Mat, cv::Mat, cv::Mat>
-OLaRank_old::processNew(const cv::Mat &newX, const cv::Mat &y_hat, int label,
-                        int frameNumber) {
-    // calculate gradient for the new example
+// /**
+//  * The function calculates gradient for newly added pattern and a label; it also
+//  * produces (y_plus,y_neg, gradient)
+//  *
+//  * @param newX			- 		pattern
+//  * @param y_hat 		- 		label ( set of possible
+//  * positions)
+//  * @param label 		- 		predicted position
+//  * @return 				- 		triplet
+//  * (y_plus,y_neg,gradient)
+//  */
+// boost::tuple<cv::Mat, cv::Mat, cv::Mat>
+// OLaRank_old::processNew(const cv::Mat &newX, const cv::Mat &y_hat, int label,
+//                         int frameNumber) {
+//     // calculate gradient for the new example
 
-    cv::Mat y_bar_mat;
+//     cv::Mat y_bar_mat;
 
-    int K = newX.rows;
+//     int K = newX.rows;
 
-    cv::Mat grad = cv::Mat::zeros(1, K, CV_64F);
+//     cv::Mat grad = cv::Mat::zeros(1, K, CV_64F);
 
-    for (int y = 0; y < K; ++y) {
-        grad.at<double>(y) -= this->loss(y_hat.row(label), y_hat.row(y));
-        for (int i = 0; i < this->S.size(); ++i) {
-            for (int y_bar = 0; y_bar < this->S[i]->x.rows; ++y_bar) {
-                supportData *S_i = this->S[i];
+//     for (int y = 0; y < K; ++y) {
+//         grad.at<double>(y) -= this->loss(y_hat.row(label), y_hat.row(y));
+//         for (int i = 0; i < this->S.size(); ++i) {
+//             for (int y_bar = 0; y_bar < this->S[i]->x.rows; ++y_bar) {
+//                 supportData *S_i = this->S[i];
 
-                double beta_y_bar = S_i->beta.at<double>(y_bar);
-                if (beta_y_bar != 0) {
-                    grad.at<double>(y) -=
-                        beta_y_bar *
-                        this->kernel_fast(
-                            this->S[i]->x, this->S[i]->y,
-                            (this->S[i]->y).row(y_bar).at<double>(0),
-                            (this->S[i])->frameNumber, newX, y_hat,
-                            y_hat.row(y).at<double>(0), frameNumber);
-                }
-            }
-        }
-    }
+//                 double beta_y_bar = S_i->beta.at<double>(y_bar);
+//                 if (beta_y_bar != 0) {
+//                     grad.at<double>(y) -=
+//                         beta_y_bar *
+//                         this->kernel_fast(
+//                             this->S[i]->x, this->S[i]->y,
+//                             (this->S[i]->y).row(y_bar).at<double>(0),
+//                             (this->S[i])->frameNumber, newX, y_hat,
+//                             y_hat.row(y).at<double>(0), frameNumber);
+//                 }
+//             }
+//         }
+//     }
 
-    double minVal;
-    double maxVal;
-    cv::Point minLoc;
-    cv::Point maxLoc;
+//     double minVal;
+//     double maxVal;
+//     cv::Point minLoc;
+//     cv::Point maxLoc;
 
-    minMaxLoc(grad, &minVal, &maxVal, &minLoc, &maxLoc);
-    // grad.min(y_neg_idx);
-    int y_neg_idx = minLoc.x;
+//     minMaxLoc(grad, &minVal, &maxVal, &minLoc, &maxLoc);
+//     // grad.min(y_neg_idx);
+//     int y_neg_idx = minLoc.x;
 
-    if (this->verbose > 1) {
-        cout << "ProcessNew step: \n";
-        cout << "(y_plus,y_neg) " << y_hat.row(label)(0) << " "
-             << y_hat.row(y_neg_idx)(0) << endl;
-        cout << "--------------------" << endl;
-    }
+//     if (this->verbose > 1) {
+//         cout << "ProcessNew step: \n";
+//         cout << "(y_plus,y_neg) " << y_hat.row(label)(0) << " "
+//              << y_hat.row(y_neg_idx)(0) << endl;
+//         cout << "--------------------" << endl;
+//     }
 
-    // tuple<mat, mat, mat> result = make_tuple(y_plus, y_neg, grad);
-    boost::tuple<cv::Mat, cv::Mat, cv::Mat> result =
-        boost::make_tuple(y_hat.row(label), y_hat.row(y_neg_idx), grad);
-    return result;
-}
+//     // tuple<mat, mat, mat> result = make_tuple(y_plus, y_neg, grad);
+//     boost::tuple<cv::Mat, cv::Mat, cv::Mat> result =
+//         boost::make_tuple(y_hat.row(label), y_hat.row(y_neg_idx), grad);
+//     return result;
+// }
 
-/**
- * Function which maintains that the number of support patterns is less or equal
- * to the balance (variable B).
- */
-int OLaRank_old::budgetMaintance() {
-    int test = 0;
-    vector<int> idxToBeDeleted;
+// /**
+//  * Function which maintains that the number of support patterns is less or equal
+//  * to the balance (variable B).
+//  */
+// int OLaRank_old::budgetMaintance() {
+//     int test = 0;
+//     vector<int> idxToBeDeleted;
 
-    for (int i = 0; i < this->S.size(); ++i) {
-        int sum = 0;
+//     for (int i = 0; i < this->S.size(); ++i) {
+//         int sum = 0;
 
-        for (int j = 0; j < this->S[i]->x.rows; ++j) {
-            // if (abs((*this->S[i]->beta)(j))>=1.0e-7) {
+//         for (int j = 0; j < this->S[i]->x.rows; ++j) {
+//             // if (abs((*this->S[i]->beta)(j))>=1.0e-7) {
 
-            if (abs((this->S[i]->beta).at<double>(j)) != 0) {
-                test += 1;
-            } else {
-                sum++;
-            }
-        }
-        // cout<<"Idx: "<<i<<" zeros: "<<sum<<endl;
-        if (sum == this->S[i]->x.rows) {
-            idxToBeDeleted.push_back(i);
-        }
-    }
-    if (idxToBeDeleted.size() > 1) {
-        std::sort(idxToBeDeleted.begin(), idxToBeDeleted.end());
-    }
+//             if (abs((this->S[i]->beta).at<double>(j)) != 0) {
+//                 test += 1;
+//             } else {
+//                 sum++;
+//             }
+//         }
+//         // cout<<"Idx: "<<i<<" zeros: "<<sum<<endl;
+//         if (sum == this->S[i]->x.rows) {
+//             idxToBeDeleted.push_back(i);
+//         }
+//     }
+//     if (idxToBeDeleted.size() > 1) {
+//         std::sort(idxToBeDeleted.begin(), idxToBeDeleted.end());
+//     }
 
-    // be
-    auto beginningIterator = this->S.begin();
-    for (int i = (int)idxToBeDeleted.size() - 1; i >= 0; i--) {
-        // cout<<"deleting idx: "<<idxToBeDeleted[i]<<endl;
+//     // be
+//     auto beginningIterator = this->S.begin();
+//     for (int i = (int)idxToBeDeleted.size() - 1; i >= 0; i--) {
+//         // cout<<"deleting idx: "<<idxToBeDeleted[i]<<endl;
 
-        // delete kernel values
-        deleteKernelValues(this->S[idxToBeDeleted[i]]->frameNumber);
+//         // delete kernel values
+//         deleteKernelValues(this->S[idxToBeDeleted[i]]->frameNumber);
 
-        delete this->S[idxToBeDeleted[i]];
-        this->S.erase(beginningIterator + idxToBeDeleted[i]);
-    }
-    int n = test;
+//         delete this->S[idxToBeDeleted[i]];
+//         this->S.erase(beginningIterator + idxToBeDeleted[i]);
+//     }
+//     int n = test;
 
-    // If balance is not exceeded - return.
-    if (n <= this->B) {
-        return -1;
-    }
+//     // If balance is not exceeded - return.
+//     if (n <= this->B) {
+//         return -1;
+//     }
 
-    int maxNRows = 0;
+//     int maxNRows = 0;
 
-    for (int i = 0; i < this->S.size(); i++) {
-        if (this->S[i]->x.rows >= maxNRows) {
-            maxNRows = this->S[i]->x.rows;
-        }
-    }
+//     for (int i = 0; i < this->S.size(); i++) {
+//         if (this->S[i]->x.rows >= maxNRows) {
+//             maxNRows = this->S[i]->x.rows;
+//         }
+//     }
 
-    cv::Mat scores =
-        cv::Mat::zeros(static_cast<int>(this->S.size()), maxNRows, CV_64F);
-    cv::Mat y_r, x_r;
-    scores = scores * INFINITY;
+//     cv::Mat scores =
+//         cv::Mat::zeros(static_cast<int>(this->S.size()), maxNRows, CV_64F);
+//     cv::Mat y_r, x_r;
+//     scores = scores * INFINITY;
 
-    for (int i = 0; i < this->S.size(); ++i) {
-        for (int k = 0; k < this->S[i]->x.rows; ++k) {
-            if ((this->S[i]->beta).at<double>(k) < 0) {
+//     for (int i = 0; i < this->S.size(); ++i) {
+//         for (int k = 0; k < this->S[i]->x.rows; ++k) {
+//             if ((this->S[i]->beta).at<double>(k) < 0) {
                 x_r = this->S[i]->x;
                 y_r = this->S[i]->y;
 
@@ -830,7 +830,8 @@ void OLaRank_old::testIfObjectiveIncreases() {
     int i;
     cv::Mat y_plus, y_neg;
 
-    for (int ii = 0; ii < this->parameters.n_R; ++ii) {
+    for (int ii = 0; ii < this->param
+             eters.n_R; ++ii) {
         for (int j = 0; j < 1; ++j) {
             boost::tuple<double, cv::Mat, cv::Mat> optimize = this->optimize();
 

@@ -9,7 +9,8 @@
 #ifndef OLARANK_OLD_H_
 #define OLARANK_OLD_H_
 #include <vector>
-#include "boost/tuple/tuple.hpp"
+
+#include <tuple>
 
 #include "../Kernels/Kernel.h"
 #include <unordered_map>
@@ -95,15 +96,15 @@ public:
     double calculateObjective();
     double loss(const cv::Mat&, const cv::Mat&);
 
-    boost::tuple<cv::Mat, cv::Mat, cv::Mat> processNew(const cv::Mat&, const cv::Mat&,
+    tuple<cv::Mat, cv::Mat, cv::Mat> processNew(const cv::Mat&, const cv::Mat&,
                                                 int,int);
     int budgetMaintance();
 
     void smoStep( int, const cv::Mat&, const cv::Mat&);
 
     void testIfObjectiveIncreases();
-    boost::tuple<int, cv::Mat, cv::Mat> processOld();
-    boost::tuple<int, cv::Mat, cv::Mat> optimize();
+    tuple<int, cv::Mat, cv::Mat> processOld();
+    tuple<int, cv::Mat, cv::Mat> optimize();
 
     void checkIfConstraintsSatisfied();
 

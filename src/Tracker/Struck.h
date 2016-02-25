@@ -23,9 +23,6 @@
 #include "../Features/AllFeatures.h"
 
 #include "../Datasets/Dataset.h"
-#include "../Datasets/EvaluationRun.h"
-
-#include "../Superpixels/Objectness.h"
 #include "../Superpixels/Plot.h"
 
 
@@ -36,13 +33,6 @@ class Struck {
     LocationSampler* samplerForUpdate;
     LocationSampler* samplerForSearch;
     Plot* objPlot;
-
-    EdgeDensity edgeDensity;
-    Straddling straddle;
-
-    bool useEdgeDensity = false;
-    bool useStraddling = false;
-    bool gtAvaliable = false;
 
     cv::Rect lastLocation;
     cv::Rect lastLocationFilter;
@@ -57,21 +47,19 @@ class Struck {
 
     cv::Mat objectnessCanvas;
 
-    int gridSearch = 2;
-    int R = 30;
-    int framesTracked = 0;
+    const static int gridSearch = 2;
+    const static int R = 30;
+    int framesTracked;
 
     bool pretraining;
     bool useFilter;
     bool useObjectness;
     bool scalePrior;
 
-    bool updateTracker = true;
-    int updateEveryNframes = 3;
-    int seed = 1;
+    bool updateTracker;
+    int updateEveryNframes;
+    const static int seed = 1;
 
-    std::string note = "Objectness measures which add top\
-10 bounding boxes on each scale (boxes addition)";
     friend std::ostream& operator<<(std::ostream&, const Struck&);
 
  public:
@@ -80,10 +68,6 @@ class Struck {
         this->pretraining = false;
     }
     int display;
-
-    void setNote(std::string note_) {
-        this->note = note_;
-    }
 
     std::vector<double> edge_params;
     std::vector<double> straddling_params;
@@ -96,21 +80,7 @@ class Struck {
     }
 
 
-    cv::Mat getObjectnessCanvas() {
-        return objectnessCanvas;
-    }
 
-    void setUpdateNFrames(int n){
-        this->updateEveryNframes = n;
-    }
-
-    void setBudget(int B){
-        this->olarank->B = B;
-    }
-
-    void setObjectnessCanvas(cv::Mat c) {
-        this->objectnessCanvas = c;
-    }
 
     Struck(bool, bool, bool, bool, bool,
                              std::string,
@@ -131,8 +101,12 @@ class Struck {
         display = display_;
         pretraining = usePretraining_;
         objPlot = new Plot(500);
+        framesTracked = 0;
+        updateEveryNframes = 3;
+        updateTracker = true;
 
     }
+
 
     void setParameters(OLaRank_old* olarank_, Feature* feature_,
                        LocationSampler* samplerSearch_,
@@ -145,6 +119,24 @@ class Struck {
         this->useFilter = useFilter_;
         this->display = display_;
     }
+
+
+    cv::Mat getObjectnessCanvas() {
+        return objectnessCanvas;
+    }
+
+    void setUpdateNFrames(int n){
+        this->updateEveryNframes = n;
+    }
+
+    void setBudget(int B){
+        this->olarank->B = B;
+    }
+
+    void setObjectnessCanvas(cv::Mat c) {
+        this->objectnessCanvas = c;
+    }
+
 
     static Struck getTracker();
     static Struck getTracker(bool, bool, bool, bool, bool);
@@ -199,13 +191,6 @@ class Struck {
     void applyTrackerOnVideo(Dataset* dataset, std::string rootFolder,
                              int videoNumber);
 
-    EvaluationRun applyTrackerOnVideoWithinRange(Dataset* dataset,
-                                                 std::string rootFolder,
-                                                 std::string saveFolder,
-                                                 int videoNumber,
-                                                 int frameFrom,
-                                                 int frameTo,
-                                                 bool saveResults=false);
 
     void saveResults(string fileName);
 

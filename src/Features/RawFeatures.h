@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include "Feature.h"
-
+#include "boost/lexical_cast.hpp"
 class RawFeatures:public Feature {
     
     
@@ -24,7 +24,7 @@ public:
     int calculateFeatureDimension(){return size*size;};
     
     std::string getInfo(){
-        std::string r="Raw features with size: "+std::to_string(size)+" \n";
+        std::string r="Raw features with size: "+boost::lexical_cast<std::string>(size)+" \n";
         return r;
     };
 
