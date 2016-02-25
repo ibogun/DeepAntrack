@@ -48,7 +48,9 @@ public:
     
     
     
-    supportData(const arma::mat& x_,const arma::mat& y_,const int& label_, const int&m, const int& K, int frameNumber_){
+    supportData(const arma::mat& x_,const arma::mat& y_,
+                const int& label_, const int&m,
+                const int& K, int frameNumber_){
         
         x=new arma::mat(x_);
         y=new arma::mat(y_);

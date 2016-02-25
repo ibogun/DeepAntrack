@@ -1,9 +1,13 @@
 #ifndef SRC_TESTS_TEST_OLARANK_CPP_
 #define SRC_TESTS_TEST_OLARANK_CPP_
 
-#include "TestOLaRank.h"
-#include <glog/logging.h>
 #include <cmath>
+#include <vector>
+#include <tuple>
+#include <glog/logging.h>
+#include "TestOLaRank.h"
+
+#include "../arma/arma_supportData.h"
 
 bool isEqual(const arma::mat &m1, const cv::Mat &m2) {
     int rows = m1.n_rows;
@@ -51,6 +55,294 @@ arma::mat convertCVToMat(const cv::Mat &m1) {
         }
     }
     return c;
+}
+
+bool TestOLaRank::isSupportVectorEqual(supportData *s,
+                                       armadillo::supportData *arma_s) {
+    bool equal = true;
+
+    if (!(isEqual(*arma_s->x, s->x)))
+        equal = false;
+
+    if (!(isEqual(*arma_s->y, s->y)))
+        equal = false;
+
+    if (!(isEqual(*arma_s->beta, s->beta)))
+        equal = false;
+
+    if (!(isEqual(*arma_s->grad, s->grad)))
+        equal = false;
+
+    if (arma_s->label != s->label)
+        equal = false;
+
+    if (arma_s->frameNumber != s->frameNumber)
+        equal = false;
+
+    return equal;
+}
+
+bool TestOLaRank::isSetOLaRankSetS_equal() {
+    int num = olarank->S.size();
+    int arma_num = arma_olarank->S.size();
+
+    if (num != arma_num)
+        return false;
+
+    for (int i = 0; i < num; i++) {
+        if (!isSupportVectorEqual(olarank->S[i], arma_olarank->S[i]))
+            return false;
+    }
+
+    return true;
+}
+
+std::vector<cv::Rect> TestOLaRank::getLocations(const cv::Mat &image,
+                                                int boxes) {
+    int r = image.rows;
+    int c = image.cols;
+    CHECK_GT(boxes, 0);
+    int count = 0;
+
+    std::vector<cv::Rect> locations;
+    while (count < boxes) {
+        cv::Mat cvbox = draw->getRandomBoundingBox(r, c);
+        cv::Rect box(cvbox.at<double>(0, 1), cvbox.at<double>(0, 2),
+                     cvbox.at<double>(0, 3), cvbox.at<double>(0, 4));
+
+        locations.push_back(box);
+        count++;
+    }
+
+    return locations;
+}
+
+void TestOLaRank::performProcessNewAndSMOAndbudget() {
+    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+        this->prepareForProcessNew();
+
+    cv::Mat newX = std::get<0>(processNewData);
+    cv::Mat y_hat = std::get<1>(processNewData);
+    int label = std::get<2>(processNewData);
+    int frameNumber = std::get<3>(processNewData);
+
+    arma::mat arma_newX = convertCVToMat(newX);
+    arma::mat arma_y_hat = convertCVToMat(y_hat);
+
+    std::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
+        this->olarank->processNew(newX, y_hat, label, frameNumber);
+
+    std::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
+        this->arma_olarank->processNew(arma_newX, arma_y_hat, label,
+                                       frameNumber);
+
+    cv::Mat y_plus, y_neg;
+    cv::Mat grad = cv::Mat::zeros(1, newX.rows, CV_64F);
+    std::tie(y_plus, y_neg, grad) = p_new;
+
+    // add new element into set S
+    supportData *support =
+        new supportData(newX, y_hat, label, 0, newX.rows, frameNumber);
+    (support->grad) = grad;
+
+    // delete support;
+
+    double i = this->olarank->S.size();
+    this->olarank->S.push_back(support);
+
+    arma::mat mat_y_plus, mat_y_neg;
+    arma::mat mat_grad(1, arma_newX.n_rows, arma::fill::zeros);
+    std::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
+
+    // add new element into set S
+    armadillo::supportData *arma_support = new armadillo::supportData(
+        arma_newX, arma_y_hat, label, arma_newX.size(), newX.rows, frameNumber);
+    (*arma_support->grad) = mat_grad;
+    this->arma_olarank->S.push_back(arma_support);
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->smoStep(i, y_plus, y_neg);
+    this->arma_olarank->smoStep(i, mat_y_plus, mat_y_neg);
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->budgetMaintance();
+    this->arma_olarank->budgetMaintance();
+
+    assert(isSetOLaRankSetS_equal());
+}
+
+TEST_F(TestOLaRank, testProcessOld) {
+    this->performProcessNewAndSMOAndbudget();
+
+    double i;
+    cv::Mat y_plus, y_neg;
+    std::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
+
+    tie(i, y_plus, y_neg) = p_old;
+
+    arma::mat arma_y_plus, arma_y_neg;
+    std::tuple<double, arma::mat, arma::mat> arma_p_old =
+        this->arma_olarank->processOld();
+
+    tie(i, arma_y_plus, arma_y_neg) = arma_p_old;
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->smoStep(i, y_plus, y_neg);
+    this->arma_olarank->smoStep(i, arma_y_plus, arma_y_neg);
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->budgetMaintance();
+    this->arma_olarank->budgetMaintance();
+    assert(isSetOLaRankSetS_equal());
+}
+
+TEST_F(TestOLaRank, testOptimize) {
+    this->performProcessNewAndSMOAndbudget();
+
+    double i;
+    cv::Mat y_plus, y_neg;
+    std::tuple<double, cv::Mat, cv::Mat> p_old = this->olarank->processOld();
+
+    tie(i, y_plus, y_neg) = p_old;
+
+    arma::mat arma_y_plus, arma_y_neg;
+    std::tuple<double, arma::mat, arma::mat> arma_p_old =
+        this->arma_olarank->processOld();
+
+    tie(i, arma_y_plus, arma_y_neg) = arma_p_old;
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->smoStep(i, y_plus, y_neg);
+    this->arma_olarank->smoStep(i, arma_y_plus, arma_y_neg);
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->budgetMaintance();
+    this->arma_olarank->budgetMaintance();
+    assert(isSetOLaRankSetS_equal());
+
+    std::tuple<double, cv::Mat, cv::Mat> optimize = this->olarank->optimize();
+}
+
+std::tuple<cv::Mat, cv::Mat, int, int>
+TestOLaRank::prepareForProcessNew(int boxes) {
+    cv::Mat image = draw->getRandomImage();
+
+    std::vector<cv::Rect> locations = this->getLocations(image, boxes);
+
+    cv::Mat processedImage = this->feature->prepareImage(&image);
+    cv::Mat x = this->feature->calculateFeature(processedImage, locations);
+    cv::Mat y = this->feature->reshapeYs(locations);
+
+    arma::mat arma_x = convertCVToMat(x);
+    arma::mat arma_y = convertCVToMat(y);
+
+    int m = this->feature->calculateFeatureDimension();
+
+    int label = 0;
+    int frameNumber = 0;
+    supportData *s1 = new supportData(x, y, label, m, x.rows, frameNumber);
+
+    armadillo::supportData *arma_s1 = new armadillo::supportData(
+        arma_x, arma_y, label, m, x.rows, frameNumber);
+
+    this->olarank->S.push_back(s1);
+    this->arma_olarank->S.push_back(arma_s1);
+
+    std::tuple<cv::Mat, cv::Mat, int, int> result =
+        std::make_tuple(x, y, label, frameNumber);
+
+    return result;
+}
+
+TEST_F(TestOLaRank, smoStep) {
+    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+        this->prepareForProcessNew();
+
+    cv::Mat newX = std::get<0>(processNewData);
+    cv::Mat y_hat = std::get<1>(processNewData);
+    int label = std::get<2>(processNewData);
+    int frameNumber = std::get<3>(processNewData);
+
+    arma::mat arma_newX = convertCVToMat(newX);
+    arma::mat arma_y_hat = convertCVToMat(y_hat);
+
+    std::tuple<cv::Mat, cv::Mat, cv::Mat> p_new =
+        this->olarank->processNew(newX, y_hat, label, frameNumber);
+
+    std::tuple<arma::mat, arma::mat, arma::mat> arma_p_new =
+        this->arma_olarank->processNew(arma_newX, arma_y_hat, label,
+                                       frameNumber);
+
+    cv::Mat y_plus, y_neg;
+    cv::Mat grad = cv::Mat::zeros(1, newX.rows, CV_64F);
+    std::tie(y_plus, y_neg, grad) = p_new;
+
+    // add new element into set S
+    supportData *support =
+        new supportData(newX, y_hat, label, 0, newX.rows, frameNumber);
+    (support->grad) = grad;
+
+    // delete support;
+
+    double i = this->olarank->S.size();
+    this->olarank->S.push_back(support);
+
+    arma::mat mat_y_plus, mat_y_neg;
+    arma::mat mat_grad(1, arma_newX.n_rows, arma::fill::zeros);
+    std::tie(mat_y_plus, mat_y_neg, mat_grad) = arma_p_new;
+
+    // add new element into set S
+    armadillo::supportData *arma_support = new armadillo::supportData(
+        arma_newX, arma_y_hat, label, arma_newX.size(), newX.rows, frameNumber);
+    (*arma_support->grad) = mat_grad;
+    this->arma_olarank->S.push_back(arma_support);
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->smoStep(i, y_plus, y_neg);
+    this->arma_olarank->smoStep(i, mat_y_plus, mat_y_neg);
+
+    assert(isSetOLaRankSetS_equal());
+
+    this->olarank->budgetMaintance();
+    this->arma_olarank->budgetMaintance();
+
+    assert(isSetOLaRankSetS_equal());
+}
+
+TEST_F(TestOLaRank, processNew) {
+    std::tuple<cv::Mat, cv::Mat, int, int> processNewData =
+        this->prepareForProcessNew();
+
+    cv::Mat x = std::get<0>(processNewData);
+    cv::Mat y = std::get<1>(processNewData);
+    int label = std::get<2>(processNewData);
+    int frameNumber = std::get<3>(processNewData);
+
+    arma::mat arma_x = convertCVToMat(x);
+    arma::mat arma_y = convertCVToMat(y);
+
+    std::tuple<cv::Mat, cv::Mat, cv::Mat> processNewOutput =
+        this->olarank->processNew(x, y, label, frameNumber);
+
+    std::tuple<arma::mat, arma::mat, arma::mat> arma_processNewOutput =
+        this->arma_olarank->processNew(arma_x, arma_y, label, frameNumber);
+
+    cv::Mat r_1 = std::get<0>(processNewOutput);
+    cv::Mat r_2 = std::get<1>(processNewOutput);
+    cv::Mat r_3 = std::get<2>(processNewOutput);
+
+    arma::mat arma_r_1 = std::get<0>(arma_processNewOutput);
+    arma::mat arma_r_2 = std::get<1>(arma_processNewOutput);
+    arma::mat arma_r_3 = std::get<2>(arma_processNewOutput);
+
+    assert(isEqual(arma_r_1, r_1));
+    assert(isEqual(arma_r_2, r_2));
+    assert(isEqual(arma_r_3, r_3));
 }
 
 TEST_F(TestOLaRank, calculate_kernel) {

@@ -27,17 +27,21 @@ protected:
   armadillo::OLaRank_old* arma_olarank;
    const double PRECISION = 0.00001;
   DrawRandomImage* draw;
+  Feature* feature;
 
   TestOLaRank() {
           Kernel* kernel = new LinearKernel;
           armadillo::Kernel* arma_kernel = new armadillo::LinearKernel;
-          RawFeatures features(16);
+
+          int dims = 4;
+
+          feature = new RawFeatures(4);
           arma_olarank = new armadillo::OLaRank_old(arma_kernel);
           olarank = new OLaRank_old(kernel);
           // params
           int verbose = 0;
           int B = 10;
-          int m = features.calculateFeatureDimension();
+          int m = feature->calculateFeatureDimension();
 
           armadillo::params arma_p;
           arma_p.C = 100;
@@ -60,9 +64,18 @@ protected:
           delete arma_olarank;
           delete olarank;
           delete draw;
+          delete feature;
           };
   virtual void SetUp(){};
   virtual void TearDown(){};
+  std::vector<cv::Rect> getLocations(const cv::Mat& image, int n);
+
+  std::tuple<cv::Mat, cv::Mat, int, int> prepareForProcessNew(int boxes = 100);
+  bool isSetOLaRankSetS_equal();
+  bool isSupportVectorEqual(supportData* s, armadillo::supportData* arma_s);
+
+  void performProcessNewAndSMOAndbudget();
+
 };
 
 #endif
