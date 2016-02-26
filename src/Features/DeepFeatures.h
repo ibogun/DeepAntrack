@@ -14,6 +14,7 @@
 #include "boost/algorithm/string.hpp"
 #include "google/protobuf/text_format.h"
 
+#include "caffe/caffe.hpp"
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/net.hpp"
@@ -37,6 +38,10 @@ public:
 
         void loadNetwork(std::string weight_file_,
                          std::string network_definition_file_) {
+
+                int device_id = 0;
+                caffe::Caffe::SetDevice(device_id);
+                caffe::Caffe::set_mode(caffe::Caffe::GPU);
 
                 std::string pretrained_binary_proto(weight_file_);
                 std::string feature_extraction_proto(network_definition_file_);

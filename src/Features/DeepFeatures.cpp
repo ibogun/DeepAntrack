@@ -48,7 +48,9 @@ cv::Mat DeepFeatures::calculateFeature(cv::Mat &processedImage,
   int dim = this->calculateFeatureDimension();
   for (int v = 0; v < rects.size(); v++) {
     for (int i = 0; i < dim; i++) {
-      x.at<double>(v, i) = prob->cpu_data()[v * dim + i];
+
+      //x.at<double>(v, i) = prob->cpu_data()[v * dim + i];
+      x.at<double>(v, i) = prob->gpu_data()[v * dim + i];
     }
   }
 
