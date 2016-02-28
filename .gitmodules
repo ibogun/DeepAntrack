@@ -1,3 +1,6 @@
 [submodule "python/visual-tracking-benchmark"]
 	path = python/visual-tracking-benchmark
 	url = https://github.com/ibogun/visual-tracking-benchmark
+[submodule "src/python_wrappers/numpy-opencv-converter"]
+	path = src/python_wrappers/numpy-opencv-converter
+	url = git@github.com:spillai/numpy-opencv-converter

@@ -21,8 +21,8 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
 #include "caffe/util/io.hpp"
-#include "caffe/layers/memory_data_layer.hpp"
-
+//#include "caffe/layers/memory_data_layer.hpp"
+#include "caffe/vision_layers.hpp"
 class DeepFeatures:public Feature {
 private:
 
@@ -40,8 +40,8 @@ public:
                          std::string network_definition_file_) {
 
                 int device_id = 0;
-                caffe::Caffe::SetDevice(device_id);
-                caffe::Caffe::set_mode(caffe::Caffe::GPU);
+                //caffe::Caffe::SetDevice(device_id);
+                //caffe::Caffe::set_mode(caffe::Caffe::GPU);
 
                 std::string pretrained_binary_proto(weight_file_);
                 std::string feature_extraction_proto(network_definition_file_);

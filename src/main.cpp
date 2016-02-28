@@ -98,11 +98,11 @@ DEFINE_int32(tracker_type, 0,
              "Type of the tracker (RobStruck - 0, ObjDet - 1, FilterBad - 2)");
 DEFINE_double(topK, 50, "Top K objectness boxes in FilterBadStruck tracker.");
 DEFINE_string(proto_file,
-              "/Users/Ivan/Code/Tracking/Antrack/data/imagenet_memory.prototxt",
+              "/Users/Ivan/Code/Tracking/DeepAntrack/data/imagenet_memory.prototxt",
               "Proto file for the feature extraction using deep ConvNet");
 DEFINE_string(
     conv_deep_weights,
-    "/Users/Ivan/Code/Tracking/Antrack/data/bvlc_reference_caffenet.caffemodel",
+    "/Users/Ivan/Code/Tracking/DeepAntrack/data/bvlc_reference_caffenet.caffemodel",
     "File with the weights for the deep ConvNet");
 
 int main(int argc, char *argv[]) {

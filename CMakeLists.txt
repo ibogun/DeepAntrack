@@ -159,11 +159,11 @@ if(VOT2015)
 endif()
 
 if(python)
-    set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/Antrack/")
+    set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/DeepAntrack/")
 
 	find_package(PythonLibs)
 
-    PYTHON_ADD_MODULE(antrack ${SOURCE_FILES}
+    PYTHON_ADD_MODULE(DeepAntrack ${SOURCE_FILES}
       ${PYTHON_FILES_Tracker} ${Superpixels})
 
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -173,7 +173,7 @@ if(python)
     endif()
     include_directories (${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
     if (DeepFeatures)
-      target_link_libraries(antrack
+      target_link_libraries(DeepAntrack
         ${PYTHON_LIBRARIES}
         ${Boost_LIBRARIES}
         ${OpenCV_LIBS}
@@ -181,7 +181,7 @@ if(python)
         caffe
         )
       else()
-     target_link_libraries(antrack
+     target_link_libraries(DeepAntrack
         ${PYTHON_LIBRARIES}
         ${Boost_LIBRARIES}
         ${OpenCV_LIBS}
@@ -191,6 +191,6 @@ if(python)
         gflags
         )
     endif()
-    set_target_properties(antrack PROPERTIES
+    set_target_properties(DeepAntrack PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY ${PYTHON_DESTINATION})
 endif()
