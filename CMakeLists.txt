@@ -161,7 +161,8 @@ endif()
 if(python)
     set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/DeepAntrack/")
 
-	find_package(PythonLibs)
+    find_package(PythonInterp)
+    find_package(PythonLibs)
 
     PYTHON_ADD_MODULE(DeepAntrack ${SOURCE_FILES}
       ${PYTHON_FILES_Tracker} ${Superpixels})
