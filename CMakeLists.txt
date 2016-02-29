@@ -159,20 +159,22 @@ if(VOT2015)
 endif()
 
 if(python)
-    set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/DeepAntrack/")
+  set(PYTHON_DESTINATION "../python/visual-tracking-benchmark/trackers/DeepAntrack/")
+
+  list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/src/python_wrappers/numpy-opencv-converter/cmake)
 
     find_package(PythonInterp)
     find_package(PythonLibs)
-
+    find_package(NumPy REQUIRED)
     PYTHON_ADD_MODULE(DeepAntrack ${SOURCE_FILES}
       ${PYTHON_FILES_Tracker} ${Superpixels})
 
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    #if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       # Hack to make it work on my machine. Very likely you need to edit paths
-      set(PYTHON_INCLUDE_DIRS /usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Versions/2.7/Headers)
-      set(PYTHON_LIBRARIES /usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib)
-    endif()
-    include_directories (${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+      #set(PYTHON_INCLUDE_DIRS /usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Versions/2.7/Headers)
+      #set(PYTHON_LIBRARIES /usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib)
+    #endif()
+    include_directories (${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} ${PYTHON_NUMPY_INCLUDE_DIR})
     if (DeepFeatures)
       target_link_libraries(DeepAntrack
         ${PYTHON_LIBRARIES}

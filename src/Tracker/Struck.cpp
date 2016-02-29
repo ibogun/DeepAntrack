@@ -8,8 +8,38 @@
 
 #include "Struck.h"
 #include <math.h>
-#include "boost/filesystem/operations.hpp"  // includes boost/filesystem/path.hpp
-#include "boost/filesystem/fstream.hpp"     // ditto
+#include "boost/filesystem/operations.hpp" // includes boost/filesystem/path.hpp
+#include "boost/filesystem/fstream.hpp"    // ditto
+
+std::vector<cv::Rect> Struck::initializeBeforeFeatureExtraction(const cv::Mat &image,
+                                               cv::Rect &location,
+                                               int updateEveryNFrames, double b,
+                                               int P, int R, int Q) {
+    srand(this->seed);
+    // set dimensions of the sampler
+
+    this->updateEveryNframes = updateEveryNFrames;
+    // NOW
+    int m = image.rows;
+    int n = image.cols;
+
+    this->samplerForSearch->setDimensions(n, m, location.height,
+                                          location.width);
+    this->samplerForUpdate->setDimensions(n, m, location.height,
+                                          location.width);
+
+    this->boundingBoxes.push_back(location);
+    lastLocation = location;
+    // sample in polar coordinates first
+
+    std::vector<cv::Rect> locations;
+
+    // add ground truth
+    locations.push_back(location);
+    this->samplerForUpdate->sampleEquiDistant(location, locations);
+
+    return locations;
+}
 
 void Struck::initialize(cv::Mat &image, cv::Rect &location,
                         int updateEveryNFrames, double b, int P, int R, int Q) {
@@ -39,6 +69,10 @@ void Struck::initialize(cv::Mat &image, cv::Rect &location,
     cv::Mat processedImage = this->feature->prepareImage(&image);
     cv::Mat x = this->feature->calculateFeature(processedImage, locations);
     cv::Mat y = this->feature->reshapeYs(locations);
+
+    LOG(INFO) << "Rows: " << x.rows  ;
+    LOG(INFO) << "Cols: "<< x.cols ;
+    LOG(INFO) << "Type: " << x.type();
     this->olarank->initialize(x, y, 0, framesTracked);
     // add images, in case we want to show support vectors
 
@@ -187,8 +221,6 @@ cv::Rect Struck::track(cv::Mat &image) {
             cv::rectangle(plotImg, bestLocationFilter, cv::Scalar(0, 255, 100),
                           0);
         }
-
-
     }
 
     framesTracked++;
@@ -562,8 +594,8 @@ std::ostream &operator<<(std::ostream &strm, const Struck &s) {
          << *s.samplerForSearch << line << "For update \n"
          << *s.samplerForUpdate;
 
-    strm << line << "Feature representation: \n" << line
-         << s.feature->getInfo() << "\n";
+    strm << line << "Feature representation: \n" << line << s.feature->getInfo()
+         << "\n";
 
     strm << "========================================================\n";
     return strm;
@@ -913,7 +945,6 @@ Struck::Struck(bool pretraining, bool useFilter, bool useEdgeDensity,
     this->pretraining = pretraining;
     this->display = display;
     this->objPlot = new Plot(100);
-
 }
 
 void Struck::saveResults(string filename) {

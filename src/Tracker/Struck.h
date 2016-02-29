@@ -27,7 +27,7 @@
 
 
 class Struck {
- protected:
+public:
     OLaRank_old* olarank;
     Feature* feature;
     LocationSampler* samplerForUpdate;
@@ -61,8 +61,6 @@ class Struck {
     const static int seed = 1;
 
     friend std::ostream& operator<<(std::ostream&, const Struck&);
-
- public:
 
     void turnOffPreTraining() {
         this->pretraining = false;
@@ -198,8 +196,43 @@ class Struck {
                                   cv::Mat& image,cv::Rect rect,
                                   int step,cv::Vec3b color);
 
+    std::vector<cv::Rect> initializeBeforeFeatureExtraction(const cv::Mat &image,
+                                                            cv::Rect &location,
+                                                            int updateEveryNFrames,
+                                                            double b, int P,
+                                                            int R, int );
+
+    void initializeAfterFeatureExtraction(const cv::Mat& features,
+                                           std::vector<cv::Rect>& locations,
+                                           cv::Mat& image){
+        cv::Mat y = this->feature->reshapeYs(locations);
+        this->olarank->initialize(features, y, 0, framesTracked);
+        if (display == 1) {
+            cv::Scalar color(0, 255, 0);
+            cv::Mat plotImg = image.clone();
+
+            cv::rectangle(plotImg, lastLocation, color, 2);
+            cv::imshow("Tracking window", plotImg);
+            this->objectnessCanvas = plotImg;
+            cv::waitKey(1);
+
+        } else if (display == 2) {
+
+            this->allocateCanvas(image);
+            this->frames.insert({framesTracked, image});
+            this->updateDebugImage(&this->canvas, image, this->lastLocation,
+                                   cv::Scalar(250, 0, 0));
+        } else if (display == 3) {
+
+            // initalize here...
+            this->objPlot->initialize();
+        }
+
+        framesTracked++;
+    }
 
     void preTraining(cv::Mat&,const cv::Rect& location);
+
 
     void reset(){
 
